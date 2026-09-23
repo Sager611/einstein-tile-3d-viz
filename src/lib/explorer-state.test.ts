@@ -60,4 +60,10 @@ describe('explorer state', () => {
     expect(decodeSettings('#level=&spread=&slice=&relief=')).toEqual(DEFAULT_SETTINGS);
     expect(decodeSettings('#color=orientation')).toMatchObject({ hiddenGroups: [] });
   });
+
+  it('defaults old links to rotation colors', () => {
+    expect(decodeSettings('#level=2&color=porcelain').colorMode).toBe('orientation');
+    expect(decodeSettings('#level=2&color=families').colorMode).toBe('orientation');
+    expect(decodeSettings('#colors=families').colorMode).toBe('families');
+  });
 });

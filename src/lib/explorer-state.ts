@@ -83,7 +83,8 @@ const settingKeys = {
   relief: 'relief',
   features: 'features',
   edges: 'edges',
-  color: 'color',
+  // v2 key: pre-rotation-default links used `color=` and are intentionally ignored.
+  color: 'colors',
   rotate: 'rotate',
   hidden: 'hidden',
 } as const;
