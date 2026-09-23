@@ -60,6 +60,7 @@ export const SceneView = forwardRef<SceneHandle, SceneViewProps>(function SceneV
     zoom: (factor) => stageRef.current?.zoom(factor),
     capture: () => stageRef.current?.capture() ?? null,
     focus: () => stageRef.current?.focus(),
+    setOrthographic: (enabled) => stageRef.current?.setOrthographic(enabled),
   }), [])
 
   return <div ref={containerRef} className="scene-host" aria-label="Interactive Chair44 3D scene" />

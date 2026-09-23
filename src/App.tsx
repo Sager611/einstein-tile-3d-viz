@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Box,
   Download,
+  Grid2x2,
   Focus,
   Github,
   Info,
@@ -44,6 +45,7 @@ export default function App() {
   const [sceneError, setSceneError] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [orthographic, setOrthographic] = useState(false)
 
   const update = useCallback((patch: Partial<ExplorerSettings>) => {
     setSettings((current) => normalizeSettings({ ...current, ...patch }))
@@ -188,6 +190,16 @@ export default function App() {
             </IconButton>
             <IconButton label="Front" onClick={() => sceneRef.current?.setView("front")}>
               <PanelTop data-icon="front" />
+            </IconButton>
+            <IconButton
+              label="Flat view"
+              aria-pressed={orthographic}
+              onClick={() => {
+                sceneRef.current?.setOrthographic(!orthographic)
+                setOrthographic(!orthographic)
+              }}
+            >
+              <Grid2x2 data-icon="orthographic" />
             </IconButton>
             <IconButton label="Zoom in" onClick={() => sceneRef.current?.zoom(0.8)}>
               <ZoomIn data-icon="zoom-in" />

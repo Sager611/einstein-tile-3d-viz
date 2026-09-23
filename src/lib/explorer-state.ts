@@ -35,6 +35,7 @@ export interface SceneHandle {
   zoom(factor: number): void;
   capture(): string | null;
   focus(): void;
+  setOrthographic(enabled: boolean): void;
 }
 
 const isFiniteNumber = (value: unknown): value is number =>

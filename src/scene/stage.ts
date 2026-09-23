@@ -7,6 +7,7 @@ import {
   HemisphereLight,
   MathUtils,
   Mesh,
+  OrthographicCamera,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PlaneGeometry,
@@ -103,6 +104,25 @@ export function createStage(
   const camera = new PerspectiveCamera(38, 1, 0.05, 500);
   camera.up.set(0, 0, 1);
   camera.position.set(6, 6, 5);
+  // Orthographic view mirrors the orbit camera; its frustum matches the perspective view at the target.
+  const orthoCamera = new OrthographicCamera(-1, 1, 1, -1, -1000, 1000);
+  let orthographic = false;
+  const activeCamera = (): PerspectiveCamera | OrthographicCamera => {
+    if (!orthographic) return camera;
+    const distance = Math.max(camera.position.distanceTo(controls.target), 0.01);
+    const halfHeight = distance * Math.tan(MathUtils.degToRad(camera.fov) * 0.5);
+    const halfWidth = halfHeight * camera.aspect;
+    orthoCamera.left = -halfWidth;
+    orthoCamera.right = halfWidth;
+    orthoCamera.top = halfHeight;
+    orthoCamera.bottom = -halfHeight;
+    orthoCamera.position.copy(camera.position);
+    orthoCamera.quaternion.copy(camera.quaternion);
+    orthoCamera.up.copy(camera.up);
+    orthoCamera.updateProjectionMatrix();
+    orthoCamera.updateMatrixWorld(true);
+    return orthoCamera;
+  };
 
   const world = new TileWorld(settings);
   scene.add(world.root);
@@ -209,7 +229,7 @@ export function createStage(
     const dy = event.clientY - down.y;
     if (dx * dx + dy * dy >= CLICK_DISTANCE * CLICK_DISTANCE) return;
     setPointer(event);
-    raycaster.setFromCamera(pointer, camera);
+    raycaster.setFromCamera(pointer, activeCamera());
     const picked = world.pick(raycaster);
     selectedId = picked;
     if (lastWorldSelection !== selectedId) syncWorld(true);
@@ -304,7 +324,7 @@ export function createStage(
 
   const capture = (): string | null => {
     try {
-      renderer.render(scene, camera);
+      renderer.render(scene, activeCamera());
       return renderer.domElement.toDataURL('image/png');
     } catch {
       return null;
@@ -402,7 +422,7 @@ export function createStage(
     if (needsRender) pendingRenderFrames = 2;
     if (pendingRenderFrames > 0) {
       needsRender = false;
-      renderer.render(scene, camera);
+      renderer.render(scene, activeCamera());
       pendingRenderFrames -= 1;
     }
     frame = requestAnimationFrame(tick);
@@ -416,6 +436,10 @@ export function createStage(
     zoom,
     capture,
     focus,
+    setOrthographic(enabled: boolean): void {
+      orthographic = enabled;
+      needsRender = true;
+    },
     update(nextSettings: ExplorerSettings, nextSelectedId: number | null): void {
       applySettings(nextSettings, nextSelectedId);
     },

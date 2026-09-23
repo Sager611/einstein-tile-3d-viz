@@ -202,6 +202,7 @@ input:focus-visible,
 }
 
 .icon-button,
+.header-actions .github-link,
 .header-actions button,
 .dock-actions button,
 .camera-rail button {
@@ -219,6 +220,7 @@ input:focus-visible,
 }
 
 .icon-button:hover,
+.header-actions .github-link:hover,
 .header-actions button:hover,
 .dock-actions button:hover,
 .camera-rail button:hover {
