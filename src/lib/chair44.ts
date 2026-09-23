@@ -6,7 +6,7 @@ export interface Feature { coefficient: number; base: Vec3[]; apex: Vec3; center
 export interface Panel { id: number; center: Vec3; normal: Vec3; features: Feature[]; }
 
 export const FEATURE_COUNT = 192;
-export const MAX_LEVEL = 5;
+export const MAX_LEVEL = 6;
 
 const tuple = (values: readonly number[]): Vec3 => [values[0], values[1], values[2]];
 const normalize = (values: readonly number[]): Vec3 => {

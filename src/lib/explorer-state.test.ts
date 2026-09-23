@@ -30,7 +30,7 @@ describe('explorer state', () => {
     );
 
     expect(decoded).toEqual({
-      level: 5,
+      level: 6,
       spread: 0,
       slice: 0.1,
       relief: 1,

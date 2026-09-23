@@ -51,6 +51,10 @@ describe('chair44 geometry', () => {
     }
   });
 
+  it('builds all 262,144 level-6 placements', () => {
+    expect(getTiles(6)).toHaveLength(8 ** 6);
+  });
+
   it.each([1, 2, 3])('matches all level-%i panel contacts', (level) => {
     const transformed = getTiles(level).flatMap((tile) =>
       panels.map((panel) => ({
@@ -89,7 +93,7 @@ describe('chair44 geometry', () => {
   it('rejects invalid levels and is deterministic', () => {
     expect(() => getTiles(-1)).toThrow();
     expect(() => getTiles(1.5)).toThrow();
-    expect(() => getTiles(6)).toThrow();
+    expect(() => getTiles(7)).toThrow();
     expect(getTiles(3)).toEqual(getTiles(3));
   });
 });

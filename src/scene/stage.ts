@@ -346,6 +346,11 @@ export function createStage(
       onSelect(null);
     }
     extent = Math.max(world.extent, 1);
+    // Keep the whole assembly (plus exploded spread) inside the depth range at every level.
+    camera.far = Math.max(500, extent * 40);
+    camera.updateProjectionMatrix();
+    orthoCamera.near = -camera.far;
+    orthoCamera.far = camera.far;
     floor.position.z = -extent / 2 - renderedSettings.spread * (extent / 2 - 1) - 0.06;
     directional.position.set(extent * 2.5, extent * 2.25, extent * 3.5);
     directional.shadow.camera.far = extent * 8;

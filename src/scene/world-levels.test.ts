@@ -30,7 +30,7 @@ function renderedColor(world: TileWorld, index: number): string {
 }
 
 describe('large levels and color visibility', () => {
-  it.each([[4, 4096], [5, 32768]])('renders every tile at level %i', (level, count) => {
+  it.each([[4, 4096], [5, 32768], [6, 262144]])('renders every tile at level %i', (level, count) => {
     const world = createWorld({ level });
     expect(world.visibleCount).toBe(count);
     expect(world.body.count).toBe(count);

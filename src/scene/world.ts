@@ -95,6 +95,14 @@ function transformedEdges(source: BufferGeometry, matrices: Matrix4[]): BufferGe
   return geometry;
 }
 
+const colorCache = new Map<string, Color>();
+// Parsing CSS colors per instance dominates level-6 updates; cache parsed values.
+function cachedColor(css: string): Color {
+  let color = colorCache.get(css);
+  if (!color) { color = new Color(css); colorCache.set(css, color); }
+  return color;
+}
+
 export class TileWorld {
   readonly root = new Group();
   readonly body: InstancedMesh;
@@ -190,7 +198,7 @@ export class TileWorld {
       if (canonicalZ > Math.max(1, this.extent * settings.slice)) continue;
       this.body.setMatrixAt(this.visibleCount, matrix);
       const color = selectedId === pose.id ? SELECTED_COLOR : tileColor(pose, settings.colorMode);
-      this.body.setColorAt(this.visibleCount, new Color(color));
+      this.body.setColorAt(this.visibleCount, cachedColor(color));
       this.idMap.push(id); this.matrices.push(matrix); this.visibleCount++;
     }
     this.body.count = this.visibleCount;
