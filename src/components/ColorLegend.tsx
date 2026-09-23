@@ -1,5 +1,5 @@
 import { useId, useMemo, useState, type CSSProperties } from "react"
-import { ChevronDown, Eye, Palette } from "lucide-react"
+import { ChevronDown, Eye, Palette, Repeat2 } from "lucide-react"
 
 import {
   Tooltip,
@@ -22,6 +22,12 @@ const modeLabels = {
   families: "Family",
   orientation: "Rotation",
   porcelain: "Clay",
+} as const
+
+const nextMode = {
+  orientation: "families",
+  families: "porcelain",
+  porcelain: "orientation",
 } as const
 
 function initialExpanded(): boolean {
@@ -66,6 +72,21 @@ export function ColorLegend({ settings, onChange }: ColorLegendProps) {
             <span>{modeLabel}</span>
             <ChevronDown className="color-legend__chevron" aria-hidden="true" />
           </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="color-legend__show-all"
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={`Color by ${modeLabels[nextMode[settings.colorMode]]}`}
+                onClick={() => onChange({ colorMode: nextMode[settings.colorMode] })}
+              >
+                <Repeat2 aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{`Color by ${modeLabels[nextMode[settings.colorMode]]}`}</TooltipContent>
+          </Tooltip>
           {hasCurrentFilters && (
             <Tooltip>
               <TooltipTrigger asChild>
