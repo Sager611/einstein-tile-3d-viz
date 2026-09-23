@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: ExplorerSettings = {
   relief: 1,
   showFeatures: false,
   showEdges: true,
-  colorMode: 'families',
+  colorMode: 'orientation',
   autoRotate: false,
   hiddenGroups: [],
 };
@@ -67,7 +67,7 @@ export function normalizeSettings(input: Partial<ExplorerSettings>): ExplorerSet
     level,
     spread: clamp(source.spread, 0, 1, DEFAULT_SETTINGS.spread),
     slice: clamp(source.slice, 0.1, 1, DEFAULT_SETTINGS.slice),
-    relief: level > 0 ? 1 : clamp(source.relief, 1, 80, DEFAULT_SETTINGS.relief),
+    relief: clamp(source.relief, 1, 80, DEFAULT_SETTINGS.relief),
     showFeatures: typeof source.showFeatures === 'boolean' ? source.showFeatures : DEFAULT_SETTINGS.showFeatures,
     showEdges: typeof source.showEdges === 'boolean' ? source.showEdges : DEFAULT_SETTINGS.showEdges,
     colorMode: isColorMode(source.colorMode) ? source.colorMode : DEFAULT_SETTINGS.colorMode,

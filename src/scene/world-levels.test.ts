@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { Color, Matrix4, MeshStandardMaterial, Raycaster, Vector3 } from 'three';
 import { getTiles } from '../lib/chair44';
 import { tileColor } from '../lib/color-groups';
-import { DEFAULT_SETTINGS, type ExplorerSettings } from '../lib/explorer-state';
+import { DEFAULT_SETTINGS as APP_DEFAULTS, type ExplorerSettings } from '../lib/explorer-state';
+
+const DEFAULT_SETTINGS: ExplorerSettings = { ...APP_DEFAULTS, colorMode: 'families' };
 import { TileWorld } from './world';
 
 const worlds: TileWorld[] = [];

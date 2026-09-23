@@ -243,9 +243,7 @@ export default function App() {
                 level: 0,
                 spread: 0,
                 slice: 1,
-                relief: 1,
                 showFeatures: true,
-                colorMode: "porcelain",
               })
             }
           />

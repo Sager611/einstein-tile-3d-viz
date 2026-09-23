@@ -1,5 +1,6 @@
 import {
   BufferGeometry,
+  CanvasTexture,
   Color,
   DynamicDrawUsage,
   Float32BufferAttribute,
@@ -11,12 +12,56 @@ import {
   Mesh,
   MeshStandardMaterial,
   Raycaster,
+  SRGBColorSpace,
   Vector3,
 } from "three";
 import { getTiles, MAX_LEVEL, transformPoint, type TilePose } from "../lib/chair44";
 import { colorGroupKey, SELECTED_COLOR, tileColor } from "../lib/color-groups";
 import { createCarrierEdges, createCarrierGeometry, createChairGeometry } from "../lib/geometry";
 import { OVERVIEW_LEVEL, type ExplorerSettings } from "../lib/explorer-state";
+
+const FEATURE_TINT = 0.62;
+const OVERVIEW_TEXTURE_SIZE = 256;
+const OVERVIEW_FEATURE_OFFSETS: readonly [number, number][] = [
+  [-0.125, -0.25],
+  [-0.125, 0.25],
+  [0.125, -0.25],
+  [0.125, 0.25],
+  [-0.25, -0.125],
+  [-0.25, 0.125],
+  [0.25, -0.125],
+  [0.25, 0.125],
+];
+
+function setFeatureColor(material: MeshStandardMaterial, baseColor: string, showFeatures: boolean): void {
+  material.color.set(baseColor);
+  if (!showFeatures) material.color.multiplyScalar(FEATURE_TINT);
+}
+
+function createOverviewTexture(): CanvasTexture | null {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = OVERVIEW_TEXTURE_SIZE;
+  canvas.height = OVERVIEW_TEXTURE_SIZE;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, OVERVIEW_TEXTURE_SIZE, OVERVIEW_TEXTURE_SIZE);
+  const squareSize = 0.02 * OVERVIEW_TEXTURE_SIZE;
+  context.fillStyle = "#9e9e9e";
+  for (const [u, v] of OVERVIEW_FEATURE_OFFSETS) {
+    const x = u * OVERVIEW_TEXTURE_SIZE - squareSize / 2;
+    const y = (1 - v) * OVERVIEW_TEXTURE_SIZE - squareSize / 2;
+    context.fillRect(x, y, squareSize, squareSize);
+  }
+
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = 4;
+  texture.generateMipmaps = true;
+  return texture;
+}
 
 function point(value: number[] | Vector3): Vector3 {
   return value instanceof Vector3 ? value.clone() : new Vector3(value[0], value[1], value[2]);
@@ -66,6 +111,9 @@ export class TileWorld {
   private relief: number;
   private readonly geometry: BufferGeometry;
   private readonly overviewGeometry = createCarrierGeometry();
+  private readonly bodyMaterial: MeshStandardMaterial;
+  private readonly overviewMaterial: MeshStandardMaterial;
+  private readonly overviewTexture: CanvasTexture | null;
   private readonly featureMaterial: MeshStandardMaterial;
   private readonly selectedDetailFeatureMaterial: MeshStandardMaterial;
   private promotedId: number | null = null;
@@ -75,12 +123,14 @@ export class TileWorld {
     this.relief = settings.relief;
     this.geometry = createChairGeometry(settings.relief);
     const bodyMaterial = new MeshStandardMaterial({ color: "#ffffff", roughness: 0.8 });
+    this.bodyMaterial = bodyMaterial;
     const featureMaterial = new MeshStandardMaterial({ vertexColors: settings.showFeatures, roughness: 0.8 });
+    setFeatureColor(featureMaterial, "#ffffff", settings.showFeatures);
     this.featureMaterial = featureMaterial;
     const selectedDetailBodyMaterial = bodyMaterial.clone();
     selectedDetailBodyMaterial.color.set(SELECTED_COLOR);
     const selectedDetailFeatureMaterial = featureMaterial.clone();
-    selectedDetailFeatureMaterial.color.set(SELECTED_COLOR);
+    setFeatureColor(selectedDetailFeatureMaterial, SELECTED_COLOR, settings.showFeatures);
     this.selectedDetailFeatureMaterial = selectedDetailFeatureMaterial;
     this.selectedDetail = new Mesh(this.geometry, [selectedDetailBodyMaterial, selectedDetailFeatureMaterial]);
     this.selectedDetail.name = "selected-detail";
@@ -88,6 +138,12 @@ export class TileWorld {
     this.selectedDetail.visible = false;
     this.selectedDetail.matrix.makeScale(0, 0, 0);
     this.selectedDetail.scale.setScalar(0);
+    this.overviewTexture = createOverviewTexture();
+    this.overviewMaterial = new MeshStandardMaterial({
+      color: "#ffffff",
+      map: this.overviewTexture,
+      roughness: 0.8,
+    });
     this.body = new InstancedMesh(this.geometry, [bodyMaterial, featureMaterial], 8 ** MAX_LEVEL);
     this.body.castShadow = this.body.receiveShadow = true;
     this.body.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -104,6 +160,7 @@ export class TileWorld {
 
   update(settings: ExplorerSettings, selectedId: number | null): void {
     const overview = settings.level >= OVERVIEW_LEVEL;
+    this.body.material = overview ? [this.overviewMaterial] : [this.bodyMaterial, this.featureMaterial];
     this.body.geometry = overview ? this.overviewGeometry : this.geometry;
     if (settings.relief !== this.relief) {
       const replacement = createChairGeometry(settings.relief);
@@ -112,10 +169,10 @@ export class TileWorld {
     }
     if (this.featureMaterial.vertexColors !== settings.showFeatures) {
       this.featureMaterial.vertexColors = settings.showFeatures;
+      setFeatureColor(this.featureMaterial, "#ffffff", settings.showFeatures);
       this.featureMaterial.needsUpdate = true;
-    }
-    if (this.selectedDetailFeatureMaterial.vertexColors !== settings.showFeatures) {
       this.selectedDetailFeatureMaterial.vertexColors = settings.showFeatures;
+      setFeatureColor(this.selectedDetailFeatureMaterial, SELECTED_COLOR, settings.showFeatures);
       this.selectedDetailFeatureMaterial.needsUpdate = true;
     }
     this.body.castShadow = this.body.receiveShadow = !overview;
@@ -184,6 +241,7 @@ export class TileWorld {
   }
   dispose(): void {
     this.geometry.dispose(); this.overviewGeometry.dispose(); this.carrier.dispose(); this.lines.geometry.dispose(); this.selectedOutline.geometry.dispose();
-    for (const material of [this.body.material, this.selectedDetail.material, this.lines.material, this.selectedOutline.material].flat()) material.dispose();
+    this.overviewTexture?.dispose();
+    for (const material of [this.bodyMaterial, this.featureMaterial, this.overviewMaterial, this.selectedDetail.material, this.lines.material, this.selectedOutline.material].flat()) material.dispose();
   }
 }

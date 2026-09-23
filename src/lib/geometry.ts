@@ -62,6 +62,38 @@ function appendTriangle(
   for (let index = 0; index < 3; index += 1) colors.push(...color);
 }
 
+function appendTriangleWithUvs(
+  positions: number[],
+  colors: number[],
+  uvs: number[],
+  a: Vector3,
+  b: Vector3,
+  c: Vector3,
+  normal: Vec3,
+  color: readonly [number, number, number],
+  uvA: readonly [number, number],
+  uvB: readonly [number, number],
+  uvC: readonly [number, number],
+): void {
+  const cross = new Vector3().crossVectors(
+    new Vector3().subVectors(b, a),
+    new Vector3().subVectors(c, a),
+  );
+  let second = b;
+  let third = c;
+  let secondUv = uvB;
+  let thirdUv = uvC;
+  if (cross.x * normal[0] + cross.y * normal[1] + cross.z * normal[2] < 0) {
+    second = c;
+    third = b;
+    secondUv = uvC;
+    thirdUv = uvB;
+  }
+  positions.push(...a.toArray(), ...second.toArray(), ...third.toArray());
+  for (let index = 0; index < 3; index += 1) colors.push(...color);
+  uvs.push(...uvA, ...secondUv, ...thirdUv);
+}
+
 function sortedFeatureCorners(
   feature: (typeof panels)[number]['features'][number],
   panelCenter: Vec3,
@@ -209,17 +241,43 @@ export function createChairGeometry(relief = 1): BufferGeometry {
 export function createCarrierGeometry(): BufferGeometry {
   const positions: number[] = [];
   const colors: number[] = [];
+  const uvs: number[] = [];
 
   for (const panel of panels) {
     const axes = getPlaneAxes(panel.normal);
     const corners = outerRing.map((corner) => lift(corner, panel.center, axes));
-    appendTriangle(positions, colors, corners[0], corners[1], corners[2], panel.normal, WHITE);
-    appendTriangle(positions, colors, corners[0], corners[2], corners[3], panel.normal, WHITE);
+    appendTriangleWithUvs(
+      positions,
+      colors,
+      uvs,
+      corners[0],
+      corners[1],
+      corners[2],
+      panel.normal,
+      WHITE,
+      [0, 0],
+      [1, 0],
+      [1, 1],
+    );
+    appendTriangleWithUvs(
+      positions,
+      colors,
+      uvs,
+      corners[0],
+      corners[2],
+      corners[3],
+      panel.normal,
+      WHITE,
+      [0, 0],
+      [1, 1],
+      [0, 1],
+    );
   }
 
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('uv', new Float32BufferAttribute(uvs, 2));
   geometry.addGroup(0, positions.length / 3, 0);
   geometry.computeVertexNormals();
   return geometry;

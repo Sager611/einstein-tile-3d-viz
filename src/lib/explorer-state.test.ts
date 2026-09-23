@@ -24,7 +24,7 @@ describe('explorer state', () => {
     expect(decodeSettings(encodeSettings(settings))).toEqual(settings);
   });
 
-  it('clamps malformed values, guards types, and forces relief for nested levels', () => {
+  it('clamps malformed values and guards types', () => {
     const decoded = decodeSettings(
       '#level=9.7&spread=-2&slice=0&relief=NaN&features=yes&edges=0&color=invalid&rotate=1&hidden=families%3A0%2Cfamilies%3A0%2Corientation%3A24%2Cporcelain%3A1',
     );
@@ -36,13 +36,13 @@ describe('explorer state', () => {
       relief: 1,
       showFeatures: false,
       showEdges: false,
-      colorMode: 'families',
+      colorMode: 'orientation',
       autoRotate: true,
       hiddenGroups: ['families:0'],
     });
 
     expect(normalizeSettings({ level: 0, relief: 80 })).toMatchObject({ level: 0, relief: 80 });
-    expect(normalizeSettings({ level: 2, relief: 80 }).relief).toBe(1);
+    expect(normalizeSettings({ level: 3, relief: 24 }).relief).toBe(24);
   });
 
   it('normalizes hidden groups by key and keeps them across color modes', () => {

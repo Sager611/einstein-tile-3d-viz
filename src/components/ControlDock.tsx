@@ -118,32 +118,17 @@ function DockSlider({
 }
 
 function HeightReset({
-  disabled,
   exact,
   onReset,
 }: {
-  disabled: boolean
   exact: boolean
   onReset: () => void
 }) {
   const button = (
-    <Button type="button" variant="outline" size="xs" disabled={disabled} onClick={onReset}>
+    <Button type="button" variant="outline" size="xs" onClick={onReset}>
       1×
     </Button>
   )
-
-  if (disabled) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span tabIndex={0} className="inline-flex">
-            {button}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>Height is fixed at 1× above level 0.</TooltipContent>
-      </Tooltip>
-    )
-  }
 
   if (exact) {
     return (
@@ -159,7 +144,7 @@ function HeightReset({
 
 export function ControlDock({ settings, onChange, onInspect }: ControlDockProps) {
   const [moreOpen, setMoreOpen] = useState(false)
-  const effectiveRelief = settings.level === 0 ? settings.relief : 1
+  const effectiveRelief = settings.relief
   const reliefIsMagnified = effectiveRelief > 1
 
   const openMore = () => setMoreOpen(true)
@@ -226,7 +211,13 @@ export function ControlDock({ settings, onChange, onInspect }: ControlDockProps)
           </div>
         </div>
 
-        <SheetContent side="right" className="more-sheet">
+        <SheetContent
+          side="right"
+          className="more-sheet"
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onFocusOutside={(e) => e.preventDefault()}
+        >
           <SheetHeader>
             <SheetTitle>Details</SheetTitle>
             <SheetDescription className="sr-only">Additional display settings.</SheetDescription>
@@ -304,12 +295,10 @@ export function ControlDock({ settings, onChange, onInspect }: ControlDockProps)
                 max={80}
                 step={1}
                 value={[effectiveRelief]}
-                disabled={settings.level > 0}
                 onValueChange={(value) => onChange({ relief: value[0] ?? effectiveRelief })}
               />
               <div className="dock-actions">
                 <HeightReset
-                  disabled={settings.level > 0}
                   exact={!reliefIsMagnified}
                   onReset={() => onChange({ relief: 1 })}
                 />
