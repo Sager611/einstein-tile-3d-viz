@@ -373,6 +373,7 @@ export function createStage(
     const normalizedNext = { ...next, hiddenGroups: normalizeHiddenGroups(next.hiddenGroups) };
     const changed = !settingsEqual(previous, normalizedNext) || selectedId !== nextSelectedId;
     const previousSpread = spread;
+    const previousExtent = extent;
     Object.assign(settings, normalizedNext);
     selectedId = nextSelectedId;
     controls.autoRotate = settings.autoRotate && !reducedMotion;
@@ -381,7 +382,15 @@ export function createStage(
     renderedSettings = { ...settings, spread };
     if (changed) syncWorld();
     if (immediateSpread) rescaleCameraForSpread(previousSpread, spread);
-    if (settings.level !== previous.level) fit(false);
+    if (settings.level !== previous.level) {
+      // The hierarchy is self-similar about the origin: scaling the view keeps the user's zoom, pan, and angle.
+      const scale = extent / Math.max(previousExtent, 1e-6);
+      camera.position.multiplyScalar(scale);
+      controls.target.multiplyScalar(scale);
+      camera.lookAt(controls.target);
+      controls.update();
+      needsRender = true;
+    }
   };
 
   const resize = (): void => {
