@@ -41,6 +41,12 @@ export function InfoDialog({ open, onOpenChange }: InfoDialogProps) {
             <p>These are preprints; no journal-acceptance claim is made.</p>
           </section>
 
+          <p className="sr-only">
+            At overview levels, all tiles and placements are retained; micro-surface keys and
+            unselected outlines are omitted for performance; selected tiles have exact detail.
+            Click legend entries to hide or show groups; use Show all to restore them.
+          </p>
+
           <nav className="source-links" aria-label="Sources">
             <a href="https://arxiv.org/abs/2609.19214" target="_blank" rel="noopener noreferrer">
               Primary paper

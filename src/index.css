@@ -271,6 +271,10 @@ input:focus-visible,
 }
 
 .scene-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   position: absolute;
   z-index: 5;
   bottom: calc(28px + env(safe-area-inset-bottom));
@@ -579,5 +583,39 @@ input:focus-visible,
     scroll-behavior: auto !important;
     animation: none !important;
     transition: none !important;
+  }
+}
+
+.scene-context {
+  position: absolute;
+  z-index: 10;
+  bottom: 28px;
+  left: 28px;
+  display: flex;
+  max-width: 220px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scene-context .scene-meta,
+.scene-context .tile-selection {
+  position: static;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+}
+
+.scene-context .color-legend {
+  position: static;
+}
+
+@media (max-width: 640px) {
+  .scene-context {
+    top: 76px;
+    right: auto;
+    bottom: auto;
+    left: 18px;
+    max-width: 170px;
   }
 }

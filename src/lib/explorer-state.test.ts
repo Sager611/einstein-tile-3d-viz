@@ -10,14 +10,15 @@ import {
 describe('explorer state', () => {
   it('round-trips a non-default state through a share hash', () => {
     const settings: ExplorerSettings = {
-      level: 0,
+      level: 5,
       spread: 0.75,
       slice: 0.4,
-      relief: 24,
+      relief: 1,
       showFeatures: true,
       showEdges: false,
       colorMode: 'orientation',
       autoRotate: true,
+      hiddenGroups: ['families:0', 'orientation:2'],
     };
 
     expect(decodeSettings(encodeSettings(settings))).toEqual(settings);
@@ -25,11 +26,11 @@ describe('explorer state', () => {
 
   it('clamps malformed values, guards types, and forces relief for nested levels', () => {
     const decoded = decodeSettings(
-      '#level=9.7&spread=-2&slice=0&relief=NaN&features=yes&edges=0&color=invalid&rotate=1',
+      '#level=9.7&spread=-2&slice=0&relief=NaN&features=yes&edges=0&color=invalid&rotate=1&hidden=families%3A0%2Cfamilies%3A0%2Corientation%3A24%2Cporcelain%3A1',
     );
 
     expect(decoded).toEqual({
-      level: 3,
+      level: 5,
       spread: 0,
       slice: 0.1,
       relief: 1,
@@ -37,14 +38,26 @@ describe('explorer state', () => {
       showEdges: false,
       colorMode: 'families',
       autoRotate: true,
+      hiddenGroups: ['families:0'],
     });
 
     expect(normalizeSettings({ level: 0, relief: 80 })).toMatchObject({ level: 0, relief: 80 });
     expect(normalizeSettings({ level: 2, relief: 80 }).relief).toBe(1);
   });
 
+  it('normalizes hidden groups by key and keeps them across color modes', () => {
+    const normalized = normalizeSettings({
+      colorMode: 'families',
+      hiddenGroups: ['orientation:2', 'families:0', 'families:0', 'porcelain:0', 'families:8', 'invalid'],
+    });
+
+    expect(normalized.hiddenGroups).toEqual(['families:0', 'orientation:2', 'porcelain:0']);
+    expect(normalizeSettings({ ...normalized, colorMode: 'orientation' }).hiddenGroups).toEqual(normalized.hiddenGroups);
+  });
+
   it('uses defaults for empty and incomplete hashes', () => {
     expect(decodeSettings('')).toEqual(DEFAULT_SETTINGS);
     expect(decodeSettings('#level=&spread=&slice=&relief=')).toEqual(DEFAULT_SETTINGS);
+    expect(decodeSettings('#color=orientation')).toMatchObject({ hiddenGroups: [] });
   });
 });

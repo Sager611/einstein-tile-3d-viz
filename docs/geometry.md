@@ -30,9 +30,16 @@ The child records below are exact records from the independent definition. `p` i
 
 In the source placement convention, refinement is `refine(GH, 2t + Gu)`: apply the eight rows to a parent placement with proper rotation `G` and translation `t`, using each row's `R` and `u`. After `n` refinements the finite patch contains `8^n` child placements and has linear scale `2^n` (a finite nested patch, not an asserted infinite filling).
 
+## Rendering behavior
+
+- Levels 0–3 render each tile's full 192-feature geometry.
+- Levels 4–5 render all tile placements at their correct positions using a 48-triangle carrier overview; this is a complete placement render, not sampling. The selected tile is rendered with its full 4,272-triangle mesh.
+- Unselected outlines are omitted at high levels.
+- Family colors are top-level substitution groups. Each of the 24 proper rotations has one unique hue; the Clay family is uniform. The interactive legend filters groups in the current mode, with hide/show controls and **Show all**; those filters persist in the URL.
+
 ## Validation and limits
 
-The supplied validation checked the exact integer grid and contacts through levels 0–3:
+The supplied validation checks exact integer-grid contacts through levels 0–3. Occupancy and placement-count checks extend through levels 4–5:
 
 | level `n` | carrier copies | linear scale |
 |---:|---:|---:|
@@ -40,8 +47,10 @@ The supplied validation checked the exact integer grid and contacts through leve
 | 1 | 8 | 2 |
 | 2 | 64 | 4 |
 | 3 | 512 | 8 |
+| 4 | 4,096 | 16 |
+| 5 | 32,768 | 32 |
 
-At level 1, **48 internal panel pairs** and **384 physical feature matches** mated, with **zero errors**. The contact-validation record also reports 3,024 coordinates checked, zero non-integer coordinates, zero internal-panel failures, zero physical-feature failures, and no other failures.
+At level 1, **48 internal panel pairs** and **384 physical feature matches** mated, with **zero errors**. Exact contact validation remains bounded to levels 0–3, with **43,008 checked pairs** at level 3; no full-feature contact check is claimed for levels 4–5. That level-1 contact-validation record also reports 3,024 coordinates checked, zero non-integer coordinates, zero internal-panel failures, zero physical-feature failures, and no other failures.
 
 These are finite-patch and coordinate/contact results only. The undecorated seven-cube carrier is periodic under lattice translations; neither it nor a finite decorated patch proves an infinite aperiodic tiling or an infinite-space fill. The cited result is a **proposed preprint result**, not a peer-reviewed claim. Any height magnification, exploded copy view, or similar renderer mode is illustrative UI and must be labeled as such; it is not the exact geometry or an exact tiling.
 

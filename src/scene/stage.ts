@@ -18,6 +18,7 @@ import {
   WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OVERVIEW_LEVEL } from '../lib/explorer-state';
 import type { ExplorerSettings, SceneHandle, ViewPreset } from '../lib/explorer-state';
 import { TileWorld } from './world';
 
@@ -30,11 +31,17 @@ const FIT_MARGIN = 1.4;
 const TOP_EPSILON = 1e-3;
 const CLICK_DISTANCE = 5;
 
+function normalizeHiddenGroups(hiddenGroups: string[]): string[] {
+  return [...new Set(hiddenGroups)].sort();
+}
+
 function cloneSettings(settings: ExplorerSettings): ExplorerSettings {
-  return { ...settings };
+  return { ...settings, hiddenGroups: normalizeHiddenGroups(settings.hiddenGroups) };
 }
 
 function settingsEqual(first: ExplorerSettings, second: ExplorerSettings): boolean {
+  const firstHiddenGroups = normalizeHiddenGroups(first.hiddenGroups);
+  const secondHiddenGroups = normalizeHiddenGroups(second.hiddenGroups);
   return (
     first.level === second.level &&
     first.spread === second.spread &&
@@ -43,7 +50,9 @@ function settingsEqual(first: ExplorerSettings, second: ExplorerSettings): boole
     first.showFeatures === second.showFeatures &&
     first.showEdges === second.showEdges &&
     first.colorMode === second.colorMode &&
-    first.autoRotate === second.autoRotate
+    first.autoRotate === second.autoRotate &&
+    firstHiddenGroups.length === secondHiddenGroups.length &&
+    firstHiddenGroups.every((group, index) => group === secondHiddenGroups[index])
   );
 }
 
@@ -71,6 +80,8 @@ export function createStage(
   let frame = 0;
   let lastFrameTime = typeof performance !== 'undefined' ? performance.now() : 0;
   let initialFitPending = true;
+  let needsRender = true;
+  let pendingRenderFrames = 2;
 
   const renderer = new WebGLRenderer({
     antialias: true,
@@ -149,6 +160,10 @@ export function createStage(
   controls.autoRotateSpeed = 0.7;
   controls.autoRotate = settings.autoRotate && !reducedMotion;
   controls.target.set(0, 0, 0);
+  const onControlsChange = (): void => {
+    needsRender = true;
+  };
+  controls.addEventListener('change', onControlsChange);
 
   const rescaleCameraForSpread = (previousSpread: number, nextSpread: number): void => {
     if (Math.abs(nextSpread - previousSpread) < 1e-8) return;
@@ -235,6 +250,7 @@ export function createStage(
     camera.position.copy(target).add(direction.multiplyScalar(distance));
     camera.lookAt(target);
     controls.update();
+    needsRender = true;
   };
 
   const setView = (next: ViewPreset): void => {
@@ -252,6 +268,7 @@ export function createStage(
     }
     camera.lookAt(target);
     controls.update();
+    needsRender = true;
   };
 
   const reset = (): void => {
@@ -269,6 +286,7 @@ export function createStage(
     camera.position.copy(target).add(offset.multiplyScalar(distance));
     camera.lookAt(target);
     controls.update();
+    needsRender = true;
   };
 
   const focus = (): void => {
@@ -281,6 +299,7 @@ export function createStage(
     camera.position.copy(selectedCenter).add(direction.normalize().multiplyScalar(4));
     camera.lookAt(selectedCenter);
     controls.update();
+    needsRender = true;
   };
 
   const capture = (): string | null => {
@@ -302,6 +321,10 @@ export function createStage(
       return;
     }
     world.update(renderedSettings, selectedId);
+    if (selectedId !== null && world.tileCenter(selectedId) === null) {
+      selectedId = null;
+      onSelect(null);
+    }
     extent = Math.max(world.extent, 1);
     floor.position.z = -extent / 2 - renderedSettings.spread * (extent / 2 - 1) - 0.06;
     directional.position.set(extent * 2.5, extent * 2.25, extent * 3.5);
@@ -317,19 +340,22 @@ export function createStage(
       lastCount = world.visibleCount;
       onCount(world.visibleCount);
     }
+    needsRender = true;
   }
 
   const applySettings = (next: ExplorerSettings, nextSelectedId: number | null): void => {
     const previous = cloneSettings(settings);
-    const changed = !settingsEqual(previous, next) || selectedId !== nextSelectedId;
+    const normalizedNext = { ...next, hiddenGroups: normalizeHiddenGroups(next.hiddenGroups) };
+    const changed = !settingsEqual(previous, normalizedNext) || selectedId !== nextSelectedId;
     const previousSpread = spread;
-    Object.assign(settings, next);
+    Object.assign(settings, normalizedNext);
     selectedId = nextSelectedId;
     controls.autoRotate = settings.autoRotate && !reducedMotion;
-    if (reducedMotion) spread = settings.spread;
+    const immediateSpread = reducedMotion || settings.level >= OVERVIEW_LEVEL;
+    if (immediateSpread) spread = settings.spread;
     renderedSettings = { ...settings, spread };
     if (changed) syncWorld();
-    if (reducedMotion) rescaleCameraForSpread(previousSpread, spread);
+    if (immediateSpread) rescaleCameraForSpread(previousSpread, spread);
     if (settings.level !== previous.level) fit(false);
   };
 
@@ -337,6 +363,7 @@ export function createStage(
     if (disposed) return;
     const width = Math.max(container.clientWidth, 1);
     const height = Math.max(container.clientHeight, 1);
+    needsRender = true;
     renderer.setPixelRatio(Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, 1.75));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
@@ -362,7 +389,7 @@ export function createStage(
     if (disposed) return;
     const delta = Math.min(Math.max((now - lastFrameTime) / 1000, 0), 0.1);
     lastFrameTime = now;
-    if (!reducedMotion && Math.abs(spread - settings.spread) > 1e-5) {
+    if (!reducedMotion && settings.level < OVERVIEW_LEVEL && Math.abs(spread - settings.spread) > 1e-5) {
       const previousSpread = spread;
       const nextSpread = MathUtils.damp(spread, settings.spread, 10, delta);
       spread = Math.abs(nextSpread - settings.spread) < 1e-5 ? settings.spread : nextSpread;
@@ -371,7 +398,13 @@ export function createStage(
       syncWorld();
     }
     controls.update();
-    renderer.render(scene, camera);
+    // Settle a second frame after geometry/instance changes, then leave idle GPUs alone.
+    if (needsRender) pendingRenderFrames = 2;
+    if (pendingRenderFrames > 0) {
+      needsRender = false;
+      renderer.render(scene, camera);
+      pendingRenderFrames -= 1;
+    }
     frame = requestAnimationFrame(tick);
   };
 
@@ -396,6 +429,7 @@ export function createStage(
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('pointercancel', onPointerCancel);
       renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+      controls.removeEventListener('change', onControlsChange);
       controls.dispose();
       world.dispose();
       scene.remove(floor, ambient, hemisphere, directional, world.root);

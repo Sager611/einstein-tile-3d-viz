@@ -2,7 +2,8 @@ import type { ButtonHTMLAttributes, ReactNode } from "react"
 import { useState } from "react"
 import { Microscope, Orbit, Pause, ScanSearch, Settings } from "lucide-react"
 
-import type { ColorMode, ExplorerSettings } from "@/lib/explorer-state"
+import { MAX_LEVEL } from "@/lib/chair44"
+import { OVERVIEW_LEVEL, type ColorMode, type ExplorerSettings } from "@/lib/explorer-state"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -177,7 +178,7 @@ export function ControlDock({ settings, onChange, onInspect }: ControlDockProps)
             value={String(settings.level)}
             currentValue={settings.level}
             min={0}
-            max={3}
+            max={MAX_LEVEL}
             step={1}
             tooltip="8^level: each level multiplies the tile count by eight."
             onValueChange={(value) => onChange({ level: value })}
@@ -253,7 +254,14 @@ export function ControlDock({ settings, onChange, onInspect }: ControlDockProps)
             </Field>
 
             <Field orientation="horizontal" className="setting-row">
-              <FieldLabel htmlFor="edges-switch">Edges</FieldLabel>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <FieldLabel htmlFor="edges-switch">Edges</FieldLabel>
+                </TooltipTrigger>
+                {settings.level >= OVERVIEW_LEVEL && (
+                  <TooltipContent>Outlines appear on the selected tile at overview levels.</TooltipContent>
+                )}
+              </Tooltip>
               <Switch
                 id="edges-switch"
                 checked={settings.showEdges}
@@ -263,7 +271,14 @@ export function ControlDock({ settings, onChange, onInspect }: ControlDockProps)
             </Field>
 
             <Field orientation="horizontal" className="setting-row">
-              <FieldLabel htmlFor="features-switch">Features</FieldLabel>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <FieldLabel htmlFor="features-switch">Features</FieldLabel>
+                </TooltipTrigger>
+                {settings.level >= OVERVIEW_LEVEL && (
+                  <TooltipContent>Exact detail appears on the selected tile at overview levels.</TooltipContent>
+                )}
+              </Tooltip>
               <Switch
                 id="features-switch"
                 checked={settings.showFeatures}

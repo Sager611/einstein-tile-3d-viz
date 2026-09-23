@@ -1,5 +1,9 @@
+import { MAX_LEVEL } from './chair44';
+
 export type ColorMode = 'families' | 'porcelain' | 'orientation';
 export type ViewPreset = 'iso' | 'top' | 'front';
+
+export const OVERVIEW_LEVEL = 4;
 
 export interface ExplorerSettings {
   level: number;
@@ -10,6 +14,7 @@ export interface ExplorerSettings {
   showEdges: boolean;
   colorMode: ColorMode;
   autoRotate: boolean;
+  hiddenGroups: string[];
 }
 
 export const DEFAULT_SETTINGS: ExplorerSettings = {
@@ -21,6 +26,7 @@ export const DEFAULT_SETTINGS: ExplorerSettings = {
   showEdges: true,
   colorMode: 'families',
   autoRotate: false,
+  hiddenGroups: [],
 };
 
 export interface SceneHandle {
@@ -42,9 +48,20 @@ const clamp = (value: unknown, min: number, max: number, fallback: number): numb
 const isColorMode = (value: unknown): value is ColorMode =>
   value === 'families' || value === 'porcelain' || value === 'orientation';
 
+const validHiddenGroups = new Set([
+  ...Array.from({ length: 8 }, (_, index) => `families:${index}`),
+  ...Array.from({ length: 24 }, (_, index) => `orientation:${index}`),
+  'porcelain:0',
+]);
+
+const normalizeHiddenGroups = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? [...new Set(value.filter((group): group is string => typeof group === 'string' && validHiddenGroups.has(group)))].sort()
+    : [];
+
 export function normalizeSettings(input: Partial<ExplorerSettings>): ExplorerSettings {
   const source = input ?? {};
-  const level = Math.round(clamp(source.level, 0, 3, DEFAULT_SETTINGS.level));
+  const level = Math.round(clamp(source.level, 0, MAX_LEVEL, DEFAULT_SETTINGS.level));
 
   return {
     level,
@@ -55,6 +72,7 @@ export function normalizeSettings(input: Partial<ExplorerSettings>): ExplorerSet
     showEdges: typeof source.showEdges === 'boolean' ? source.showEdges : DEFAULT_SETTINGS.showEdges,
     colorMode: isColorMode(source.colorMode) ? source.colorMode : DEFAULT_SETTINGS.colorMode,
     autoRotate: typeof source.autoRotate === 'boolean' ? source.autoRotate : DEFAULT_SETTINGS.autoRotate,
+    hiddenGroups: normalizeHiddenGroups(source.hiddenGroups),
   };
 }
 
@@ -67,6 +85,7 @@ const settingKeys = {
   edges: 'edges',
   color: 'color',
   rotate: 'rotate',
+  hidden: 'hidden',
 } as const;
 
 export function encodeSettings(settings: ExplorerSettings): string {
@@ -80,6 +99,7 @@ export function encodeSettings(settings: ExplorerSettings): string {
     [settingKeys.edges]: normalized.showEdges ? '1' : '0',
     [settingKeys.color]: normalized.colorMode,
     [settingKeys.rotate]: normalized.autoRotate ? '1' : '0',
+    [settingKeys.hidden]: normalized.hiddenGroups.join(','),
   });
   return `#${params.toString()}`;
 }
@@ -103,6 +123,11 @@ const readColorMode = (params: URLSearchParams, key: string): ColorMode | undefi
   return isColorMode(value) ? value : undefined;
 };
 
+const readHiddenGroups = (params: URLSearchParams, key: string): string[] | undefined => {
+  const value = params.get(key);
+  return value === null ? undefined : value.split(',');
+};
+
 export function decodeSettings(hash: string): ExplorerSettings {
   const query = typeof hash === 'string' ? hash.replace(/^#/, '') : '';
   const params = new URLSearchParams(query);
@@ -116,5 +141,6 @@ export function decodeSettings(hash: string): ExplorerSettings {
     showEdges: readBoolean(params, settingKeys.edges),
     colorMode: readColorMode(params, settingKeys.color),
     autoRotate: readBoolean(params, settingKeys.rotate),
+    hiddenGroups: readHiddenGroups(params, settingKeys.hidden),
   });
 }

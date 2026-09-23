@@ -6,7 +6,7 @@ export interface Feature { coefficient: number; base: Vec3[]; apex: Vec3; center
 export interface Panel { id: number; center: Vec3; normal: Vec3; features: Feature[]; }
 
 export const FEATURE_COUNT = 192;
-export const MAX_LEVEL = 3;
+export const MAX_LEVEL = 5;
 
 const tuple = (values: readonly number[]): Vec3 => [values[0], values[1], values[2]];
 const normalize = (values: readonly number[]): Vec3 => {
@@ -85,10 +85,6 @@ const compose = (parent: TilePose, child: TilePose, childIndex: number): TilePos
 };
 
 const levels: TilePose[][] = [[identity]];
-for (let level = 1; level <= MAX_LEVEL; level += 1) {
-  const previous = levels[level - 1];
-  levels.push(previous.flatMap((parent) => children.map((child, index) => compose(parent, child, index))));
-}
 
 const copyPose = (pose: TilePose): TilePose => ({
   id: pose.id,
@@ -101,6 +97,10 @@ const copyPose = (pose: TilePose): TilePose => ({
 export function getTiles(level: number): TilePose[] {
   if (!Number.isInteger(level) || level < 0 || level > MAX_LEVEL) {
     throw new RangeError(`level must be an integer from 0 to ${MAX_LEVEL}`);
+  }
+  while (levels.length <= level) {
+    const previous = levels[levels.length - 1];
+    levels.push(previous.flatMap((parent) => children.map((child, index) => compose(parent, child, index))));
   }
   return levels[level].map(copyPose);
 }

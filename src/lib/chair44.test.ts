@@ -32,7 +32,7 @@ describe('chair44 geometry', () => {
   );
 
   it('tiles the expected voxels', () => {
-    for (let level = 0; level <= 3; level++) {
+    for (let level = 0; level <= 5; level++) {
       const tiles = getTiles(level);
       expect(tiles).toHaveLength(8 ** level);
       const voxels = tiles.flatMap((tile) => occupiedVoxels(tile));
@@ -89,7 +89,7 @@ describe('chair44 geometry', () => {
   it('rejects invalid levels and is deterministic', () => {
     expect(() => getTiles(-1)).toThrow();
     expect(() => getTiles(1.5)).toThrow();
-    expect(() => getTiles(4)).toThrow();
+    expect(() => getTiles(6)).toThrow();
     expect(getTiles(3)).toEqual(getTiles(3));
   });
 });

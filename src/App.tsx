@@ -14,12 +14,14 @@ import {
   ZoomOut,
 } from "lucide-react"
 
+import { ColorLegend } from "./components/ColorLegend"
 import { ControlDock, IconButton } from "./components/ControlDock"
 import { InfoDialog } from "./components/InfoDialog"
 import { SceneView } from "./components/SceneView"
 import {
   DEFAULT_SETTINGS,
   decodeSettings,
+  OVERVIEW_LEVEL,
   encodeSettings,
   normalizeSettings,
   type ExplorerSettings,
@@ -195,29 +197,43 @@ export default function App() {
             </IconButton>
           </aside>
 
-          <div className="scene-meta">
-            <span>{visibleCount} {visibleCount === 1 ? "tile" : "tiles"}</span>
-            {settings.relief > 1 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>×{settings.relief}</span>
-                </TooltipTrigger>
-                <TooltipContent>Magnified height, not to scale</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-
-          {selectedId !== null && (
-            <div className="tile-selection" aria-label={`Selected tile #${selectedId + 1}`}>
-              <span>#{selectedId + 1}</span>
-              <IconButton label="Focus tile" onClick={() => sceneRef.current?.focus()}>
-                <Focus data-icon="focus" />
-              </IconButton>
-              <IconButton label="Clear selection" onClick={() => setSelectedId(null)}>
-                <X data-icon="clear" />
-              </IconButton>
+          <aside className="scene-context" aria-label="Scene colors and selection">
+            <div className="scene-meta">
+              <span>{visibleCount.toLocaleString()} {visibleCount === 1 ? "tile" : "tiles"}</span>
+              {settings.relief > 1 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>×{settings.relief}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>Magnified height, not to scale</TooltipContent>
+                </Tooltip>
+              )}
+              {settings.level >= OVERVIEW_LEVEL && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>Overview</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    At overview levels, all tiles and placements are retained; micro-surface keys and unselected outlines are omitted for performance; selected tiles have exact detail.
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
-          )}
+
+            {selectedId !== null && (
+              <div className="tile-selection" aria-label={`Selected tile #${selectedId + 1}`}>
+                <span>#{selectedId + 1}</span>
+                <IconButton label="Focus tile" onClick={() => sceneRef.current?.focus()}>
+                  <Focus data-icon="focus" />
+                </IconButton>
+                <IconButton label="Clear selection" onClick={() => setSelectedId(null)}>
+                  <X data-icon="clear" />
+                </IconButton>
+              </div>
+            )}
+
+            <ColorLegend settings={settings} onChange={update} />
+          </aside>
 
           <ControlDock
             settings={settings}

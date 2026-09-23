@@ -1,7 +1,11 @@
 import { BufferGeometry, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { panels } from './chair44';
-import { createCarrierEdges, createChairGeometry } from './geometry';
+import {
+  createCarrierEdges,
+  createCarrierGeometry,
+  createChairGeometry,
+} from './geometry';
 
 const pointKey = (point: Vector3): string =>
   [point.x, point.y, point.z].map((value) => Math.round(value * 1e8)).join(',');
@@ -154,6 +158,19 @@ describe('chair geometry', () => {
     } finally {
       standard.dispose();
       deep.dispose();
+    }
+  });
+
+  it('builds a finite, closed seven-cube carrier surface', () => {
+    const carrier = createCarrierGeometry();
+    try {
+      const surface = inspectSurface(carrier);
+      expect(surface.triangles).toBe(48);
+      expect([...surface.edges.values()].every((count) => count === 2)).toBe(true);
+      expect(surface.vertices - surface.edges.size + surface.triangles).toBe(2);
+      expect(signedVolume(carrier)).toBeCloseTo(7, 6);
+    } finally {
+      carrier.dispose();
     }
   });
 

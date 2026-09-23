@@ -206,20 +206,30 @@ export function createChairGeometry(relief = 1): BufferGeometry {
   return geometry;
 }
 
-export function createCarrierEdges(): BufferGeometry {
-  const carrier = new BufferGeometry();
+export function createCarrierGeometry(): BufferGeometry {
   const positions: number[] = [];
-  const unusedColors: number[] = [];
+  const colors: number[] = [];
 
   for (const panel of panels) {
     const axes = getPlaneAxes(panel.normal);
     const corners = outerRing.map((corner) => lift(corner, panel.center, axes));
-    appendTriangle(positions, unusedColors, corners[0], corners[1], corners[2], panel.normal, WHITE);
-    appendTriangle(positions, unusedColors, corners[0], corners[2], corners[3], panel.normal, WHITE);
+    appendTriangle(positions, colors, corners[0], corners[1], corners[2], panel.normal, WHITE);
+    appendTriangle(positions, colors, corners[0], corners[2], corners[3], panel.normal, WHITE);
   }
 
-  carrier.setAttribute('position', new Float32BufferAttribute(positions, 3));
-  const edges = new EdgesGeometry(carrier, 20);
-  carrier.dispose();
-  return edges;
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+  geometry.addGroup(0, positions.length / 3, 0);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+export function createCarrierEdges(): BufferGeometry {
+  const carrier = createCarrierGeometry();
+  try {
+    return new EdgesGeometry(carrier, 20);
+  } finally {
+    carrier.dispose();
+  }
 }

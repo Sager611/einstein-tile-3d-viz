@@ -1,23 +1,22 @@
 import {
   BufferGeometry,
   Color,
+  DynamicDrawUsage,
   Float32BufferAttribute,
   Group,
   InstancedMesh,
   LineBasicMaterial,
   LineSegments,
   Matrix4,
+  Mesh,
   MeshStandardMaterial,
   Raycaster,
   Vector3,
 } from "three";
-import { getTiles, transformPoint, type TilePose } from "../lib/chair44";
-import { createCarrierEdges, createChairGeometry } from "../lib/geometry";
-import type { ExplorerSettings } from "../lib/explorer-state";
-
-const PORCELAIN = new Color("#e9e4db");
-const PALETTE = ["#9db9c6", "#c1cbbb", "#ddc9a9", "#bcb4ce", "#d5aba1", "#afc9c8", "#c7cbd3", "#d2c2b5"];
-const SELECTED = new Color("#edcb8d");
+import { getTiles, MAX_LEVEL, transformPoint, type TilePose } from "../lib/chair44";
+import { colorGroupKey, SELECTED_COLOR, tileColor } from "../lib/color-groups";
+import { createCarrierEdges, createCarrierGeometry, createChairGeometry } from "../lib/geometry";
+import { OVERVIEW_LEVEL, type ExplorerSettings } from "../lib/explorer-state";
 
 function point(value: number[] | Vector3): Vector3 {
   return value instanceof Vector3 ? value.clone() : new Vector3(value[0], value[1], value[2]);
@@ -56,6 +55,7 @@ export class TileWorld {
   readonly body: InstancedMesh;
   readonly lines: LineSegments;
   readonly selectedOutline: LineSegments;
+  readonly selectedDetail: Mesh;
   extent = 0;
   visibleCount = 0;
   private readonly carrier = createCarrierEdges();
@@ -65,79 +65,125 @@ export class TileWorld {
   private level = -1;
   private relief: number;
   private readonly geometry: BufferGeometry;
+  private readonly overviewGeometry = createCarrierGeometry();
   private readonly featureMaterial: MeshStandardMaterial;
-  private currentSpread = 0;
+  private readonly selectedDetailFeatureMaterial: MeshStandardMaterial;
+  private promotedId: number | null = null;
+  private promotedIndex = -1;
 
   constructor(settings: ExplorerSettings) {
     this.relief = settings.relief;
     this.geometry = createChairGeometry(settings.relief);
-    const bodyMaterial = new MeshStandardMaterial({ color: PORCELAIN, roughness: 0.8 });
-    const featureMaterial = new MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
-    featureMaterial.visible = settings.showFeatures;
+    const bodyMaterial = new MeshStandardMaterial({ color: "#ffffff", roughness: 0.8 });
+    const featureMaterial = new MeshStandardMaterial({ vertexColors: settings.showFeatures, roughness: 0.8 });
     this.featureMaterial = featureMaterial;
-    this.body = new InstancedMesh(this.geometry, [bodyMaterial, featureMaterial], 512);
+    const selectedDetailBodyMaterial = bodyMaterial.clone();
+    selectedDetailBodyMaterial.color.set(SELECTED_COLOR);
+    const selectedDetailFeatureMaterial = featureMaterial.clone();
+    selectedDetailFeatureMaterial.color.set(SELECTED_COLOR);
+    this.selectedDetailFeatureMaterial = selectedDetailFeatureMaterial;
+    this.selectedDetail = new Mesh(this.geometry, [selectedDetailBodyMaterial, selectedDetailFeatureMaterial]);
+    this.selectedDetail.name = "selected-detail";
+    this.selectedDetail.matrixAutoUpdate = false;
+    this.selectedDetail.visible = false;
+    this.selectedDetail.matrix.makeScale(0, 0, 0);
+    this.selectedDetail.scale.setScalar(0);
+    this.body = new InstancedMesh(this.geometry, [bodyMaterial, featureMaterial], 8 ** MAX_LEVEL);
     this.body.castShadow = this.body.receiveShadow = true;
-    this.body.instanceMatrix.setUsage(35044);
+    this.body.instanceMatrix.setUsage(DynamicDrawUsage);
     const lineMaterial = new LineBasicMaterial({ color: "#52636c", transparent: true, opacity: 0.18 });
     this.lines = new LineSegments(new BufferGeometry(), lineMaterial);
     this.lines.frustumCulled = false;
-    const selectedMaterial = new LineBasicMaterial({ color: SELECTED, transparent: true, opacity: 0.9 });
+    const selectedMaterial = new LineBasicMaterial({ color: SELECTED_COLOR, transparent: true, opacity: 0.9 });
     this.selectedOutline = new LineSegments(new BufferGeometry(), selectedMaterial);
     this.selectedOutline.frustumCulled = false;
     this.selectedOutline.scale.setScalar(0);
-    this.root.add(this.body, this.lines, this.selectedOutline);
+    this.root.add(this.body, this.selectedDetail, this.lines, this.selectedOutline);
     this.update(settings, null);
   }
 
   update(settings: ExplorerSettings, selectedId: number | null): void {
-    this.currentSpread = settings.spread;
+    const overview = settings.level >= OVERVIEW_LEVEL;
+    this.body.geometry = overview ? this.overviewGeometry : this.geometry;
     if (settings.relief !== this.relief) {
       const replacement = createChairGeometry(settings.relief);
       this.geometry.copy(replacement); replacement.dispose();
       this.relief = settings.relief;
     }
-    this.featureMaterial.visible = settings.showFeatures;
+    if (this.featureMaterial.vertexColors !== settings.showFeatures) {
+      this.featureMaterial.vertexColors = settings.showFeatures;
+      this.featureMaterial.needsUpdate = true;
+    }
+    if (this.selectedDetailFeatureMaterial.vertexColors !== settings.showFeatures) {
+      this.selectedDetailFeatureMaterial.vertexColors = settings.showFeatures;
+      this.selectedDetailFeatureMaterial.needsUpdate = true;
+    }
+    this.body.castShadow = this.body.receiveShadow = !overview;
     if (settings.level !== this.level) { this.level = settings.level; this.poses = getTiles(this.level); }
     const half = 2 ** this.level;
     this.extent = 2 * half;
     this.idMap.length = this.visibleCount = 0;
     this.matrices.length = 0;
-    for (let id = 0; id < this.poses.length && this.visibleCount < 512; id++) {
-      const pose = this.poses[id], matrix = tileMatrix(pose, half, settings.spread);
-      const center = new Vector3(0, 0, 0).applyMatrix4(matrix);
-      if (center.z > Math.max(1, this.extent * settings.slice)) continue;
+    const hiddenSet = new Set(settings.hiddenGroups);
+    for (let id = 0; id < this.poses.length; id++) {
+      const pose = this.poses[id];
+      if (hiddenSet.has(colorGroupKey(pose, settings.colorMode))) continue;
+      const matrix = tileMatrix(pose, half, settings.spread);
+      const canonicalZ = transformPoint([1, 1, 1], pose)[2];
+      if (canonicalZ > Math.max(1, this.extent * settings.slice)) continue;
       this.body.setMatrixAt(this.visibleCount, matrix);
-      const family = pose.lineage?.[0] || 0;
-      const orientation = (pose.permutation[0] * 3 + pose.permutation[1] * 5 + pose.signs.reduce((a, b) => a + b, 0)) & 7;
-      this.body.setColorAt(this.visibleCount, new Color(PALETTE[(family + orientation) % PALETTE.length]));
+      const color = selectedId === pose.id ? SELECTED_COLOR : tileColor(pose, settings.colorMode);
+      this.body.setColorAt(this.visibleCount, new Color(color));
       this.idMap.push(id); this.matrices.push(matrix); this.visibleCount++;
     }
     this.body.count = this.visibleCount;
-    this.body.instanceMatrix.needsUpdate = true;
     if (this.body.instanceColor) this.body.instanceColor.needsUpdate = true;
-    this.lines.geometry.dispose(); this.lines.geometry = transformedEdges(this.carrier, this.matrices);
-    if (selectedId !== null) {
-      const visible = this.idMap.indexOf(selectedId);
-      if (visible >= 0) { this.selectedOutline.geometry.dispose(); this.selectedOutline.geometry = transformedEdges(this.carrier, [this.matrices[visible]]); this.selectedOutline.scale.setScalar(1); }
-      else this.selectedOutline.scale.setScalar(0);
+    this.lines.visible = settings.showEdges && !overview;
+    if (this.lines.visible) {
+      this.lines.geometry.dispose(); this.lines.geometry = transformedEdges(this.carrier, this.matrices);
+    }
+    const visible = selectedId === null ? -1 : this.idMap.indexOf(selectedId);
+    if (visible >= 0 && settings.showEdges) {
+      this.selectedOutline.geometry.dispose(); this.selectedOutline.geometry = transformedEdges(this.carrier, [this.matrices[visible]]); this.selectedOutline.scale.setScalar(1);
     } else this.selectedOutline.scale.setScalar(0);
+    if (overview && visible >= 0) {
+      this.selectedDetail.visible = true;
+      this.selectedDetail.matrix.copy(this.matrices[visible]);
+      this.selectedDetail.matrixWorldNeedsUpdate = true;
+      this.selectedDetail.scale.setScalar(1);
+      this.promotedId = selectedId;
+      this.promotedIndex = visible;
+      this.body.setMatrixAt(visible, new Matrix4().makeScale(0, 0, 0));
+    } else {
+      this.selectedDetail.visible = false;
+      this.selectedDetail.matrix.makeScale(0, 0, 0);
+      this.selectedDetail.matrixWorldNeedsUpdate = true;
+      this.selectedDetail.scale.setScalar(0);
+      this.promotedId = null;
+      this.promotedIndex = -1;
+    }
+    this.body.instanceMatrix.needsUpdate = true;
     this.body.computeBoundingBox(); this.body.computeBoundingSphere();
     this.lines.geometry.computeBoundingBox(); this.lines.geometry.computeBoundingSphere();
   }
 
   pick(raycaster: Raycaster): number | null {
-    const hit = raycaster.intersectObject(this.body, false)[0];
-    return hit?.instanceId === undefined || hit.instanceId >= this.visibleCount ? null : this.idMap[hit.instanceId];
+    const bodyHit = raycaster.intersectObject(this.body, false).find((intersection) =>
+      intersection.instanceId !== undefined &&
+      intersection.instanceId < this.visibleCount &&
+      intersection.instanceId !== this.promotedIndex,
+    );
+    const detailHit = this.selectedDetail.visible ? raycaster.intersectObject(this.selectedDetail, false)[0] : undefined;
+    if (detailHit && (!bodyHit || detailHit.distance < bodyHit.distance)) return this.promotedId;
+    return bodyHit?.instanceId === undefined ? null : this.idMap[bodyHit.instanceId];
   }
   tileCenter(id: number): Vector3 | null {
     const index = this.idMap.indexOf(id);
     if (index < 0) return null;
-    const half = 2 ** this.level;
-    const transformed = point(transformPoint([half, half, half], this.poses[this.idMap[index]]));
-    return transformed.addScalar(-half).multiplyScalar(1 + this.currentSpread);
+    return new Vector3(1, 1, 1).applyMatrix4(this.matrices[index]);
   }
   dispose(): void {
-    this.geometry.dispose(); this.carrier.dispose(); this.lines.geometry.dispose(); this.selectedOutline.geometry.dispose();
-    for (const material of [this.body.material, this.lines.material, this.selectedOutline.material].flat()) material.dispose();
+    this.geometry.dispose(); this.overviewGeometry.dispose(); this.carrier.dispose(); this.lines.geometry.dispose(); this.selectedOutline.geometry.dispose();
+    for (const material of [this.body.material, this.selectedDetail.material, this.lines.material, this.selectedOutline.material].flat()) material.dispose();
   }
 }
