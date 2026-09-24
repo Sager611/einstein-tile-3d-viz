@@ -1,6 +1,7 @@
 # Family figures
 
-Vector (`.pdf`, `.svg`) and 300 dpi (`.png`) figures for the three Lean-proven warp families of Chair44,
+Vector (`.pdf`, `.svg`) and 300 dpi (`.png`) figures for three example Lean-proven warp families of Chair44
+(A, B, C are instances of one general theorem, `WaveSpec.family_concrete`; any valid wave gives another),
 generated from the exact formula by [`make_family_figures.py`](make_family_figures.py)
 (`pip install -r requirements.txt && python3 make_family_figures.py`).
 

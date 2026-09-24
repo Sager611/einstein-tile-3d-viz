@@ -1,4 +1,9 @@
-# ChairWarp — Lean 4 proofs for an equivariant warp of Chair44
+# ChairWarp — Lean 4 proofs for equivariant warps of Chair44
+
+**One general theorem makes infinitely many families.** `WaveSpec.family_concrete` (`FamilyFinal.lean`)
+plus `WaveSpec.family_noncongruent` (`Congruence.lean`): any valid wave `(k, e)` gives, for every
+amplitude `0 < s ≤ 10⁻⁹`, a new rigid tile whose warped Chair44 tilings are non-periodic, with distinct
+`s` non-congruent. `familyA/B/C` are three examples, not special cases.
 
 Build: `lake build` (Lean `v4.35.0-rc2`, Mathlib). Axiom audit: `lake env lean Axioms.lean`
 → every theorem depends only on `propext`, `Classical.choice`, `Quot.sound`. No `sorry`,
@@ -31,7 +36,7 @@ symmetry. Then for the explicit homeomorphism `warp : ℝ³ ≃ₜ ℝ³`:
 | `Ergodic.lean` | Mean ergodic theorem ⇒ an isometry all of whose powers stay within `C < 1/2` of the identity on a unit ball is the identity. |
 | `Final.lean` | Every self-isometry of `warp '' Q` and all its powers are near-symmetries of `Q` with defect `72ε` ⇒ `warp_rigid`; `warp_image_ne` (the certificate point of the bottom face is pushed out of every box covering `Q`); `chair44_warp_concrete`. |
 
-## Three infinite families (`ChairWarp/Family.lean`, `ChairWarp/FamilyFinal.lean`)
+## Infinite families from one theorem (`ChairWarp/Family.lean`, `ChairWarp/FamilyFinal.lean`)
 
 `WaveSpec` = integer data `(2k, e)`; `V(x) = Σ_{R ∈ R24} cos(2π k·Rx) R⁻¹e`, `Φ_s = id + sV`.
 For any spec with small coefficients and even `2k₀+2k₁+2k₂` (`Good`, decided), and every
@@ -51,6 +56,20 @@ waves, any amplitudes ≤ 10⁻⁹) is the identity (it must fix four convex cor
 every warped tile is a narrow cone). `familyA/B/C_noncongruent`: distinct amplitudes `s ≠ t` give
 non-congruent solids, so **each family contains infinitely many pairwise non-congruent tiles**.
 Not proved: that tiles from *different* families are non-congruent.
+
+### Adding a family
+
+Any wave passing `Good` and `Cert` is a new infinite family. Example (all checked by `decide`):
+
+```lean
+def famD : WaveSpec := ⟨![2k₀, 2k₁, 2k₂], ![e₀, e₁, e₂]⟩   -- integer data
+lemma famD_good : famD.Good := by decide +kernel
+lemma famD_cert : famD.Cert ![p₀, p₁, 0] := ⟨by decide +kernel, …⟩  -- point (p₀/8, p₁/8, 0)
+-- then: WaveSpec.family_concrete famD_good … famD_cert …  and  WaveSpec.family_noncongruent …
+```
+
+Scope: non-periodicity is proved for warped Chair44 tilings (tilings `g i '' Φ(Q)` with `g i` from a
+Chair44 tiling), assuming the paper's Theorem 1.2; tilings by `Φ(Q)` not of this form are not covered.
 
 ## Obstruction (`ChairWarp/Obstruction.lean`)
 

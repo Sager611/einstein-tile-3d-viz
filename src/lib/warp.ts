@@ -8,7 +8,8 @@ import { carrierCells, type Vec3 } from './chair44';
  * For a wave w = (k, e) the field V_w(x) = Σ_{R ∈ R24} cos(2π k·Rx) R⁻¹e commutes with Gamma, so
  * Φ_s = id + s V_w maps every Chair44 tiling onto a tiling by congruent copies of Φ_s(Q). Lean proves,
  * for every 0 < s ≤ 10⁻⁹ and each family A, B, C: Φ_s is a homeomorphism, Φ_s(Q) tiles, is rigid, has
- * only non-periodic tilings of this form, and differs from Chair44. The view magnifies s.
+ * non-periodic warped Chair44 tilings, and differs from Chair44. A, B, C are examples of the general
+ * theorem `WaveSpec.family_concrete`; any valid wave gives another family. The view magnifies s.
  */
 
 export type WarpShape = 'a' | 'b' | 'c';
