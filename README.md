@@ -1,5 +1,8 @@
 # Einstein Tile 3D Viz
 
+> [!WARNING]
+> This entire project (code, research, Lean proofs, figures, and docs) was vibecoded with AI assistance and little human supervision. Discretion is advised: verify claims independently before relying on them.
+
 Live demo: <https://sager611.github.io/einstein-tile-3d-viz/>  
 Repository: <https://github.com/Sager611/einstein-tile-3d-viz>
 
