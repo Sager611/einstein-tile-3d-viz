@@ -31,6 +31,12 @@ symmetry. Then for the explicit homeomorphism `warp : ℝ³ ≃ₜ ℝ³`:
 | `Ergodic.lean` | Mean ergodic theorem ⇒ an isometry all of whose powers stay within `C < 1/2` of the identity on a unit ball is the identity. |
 | `Final.lean` | Every self-isometry of `warp '' Q` and all its powers are near-symmetries of `Q` with defect `72ε` ⇒ `warp_rigid`; `warp_image_ne` (the certificate point of the bottom face is pushed out of every box covering `Q`); `chair44_warp_concrete`. |
 
+## Obstruction (`ChairWarp/Obstruction.lean`)
+
+`equivariant_fixes_grid`: every map commuting with Chair44's motion group fixes every point of the
+integer grid (`warp_fixes_grid` for the proved warp). Equivariant warps can bend faces and edges but can
+never move a cube corner, so they cannot change the size of Chair44's arms.
+
 ## Hypotheses (from arXiv 2609.19214, Theorem 1.2)
 
 * **Registration:** after one ambient isometry, neighbouring tiles differ by contacts of the atlas

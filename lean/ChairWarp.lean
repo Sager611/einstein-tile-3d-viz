@@ -8,3 +8,4 @@ import ChairWarp.Diam
 import ChairWarp.Pin
 import ChairWarp.Ergodic
 import ChairWarp.Final
+import ChairWarp.Obstruction

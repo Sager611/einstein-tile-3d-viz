@@ -24,6 +24,8 @@ The **Warp** drawer (wave button) deforms space by maps that commute with every 
 - **Lean** (default): the warp proved in [`lean/`](lean/README.md). Lean 4 + Mathlib prove, assuming only the paper's Theorem 1.2, that the warped tiles tile space, that the warped solid differs from Chair44 and has no symmetry, and that warped Chair44 tilings have no translational period (`chair44_warp_concrete`). The proof uses a displacement below 3.6·10⁻⁸; the view magnifies it and labels which magnifications stay inside the proved Lipschitz bound.
 - **Nubs / Wave / Ridge**: face-local illustrations (face shapes with `f(v,u) = −f(u,v)`); their tiling property is checked numerically, not in Lean.
 
+Different arm sizes are impossible in both frameworks: see [research/asymmetric-arms](research/asymmetric-arms/README.md) (Lean: every equivariant warp fixes all cube corners).
+
 The [Lean proof workflow](.github/workflows/lean.yml) rebuilds `lean/` and audits that every theorem uses only `propext`, `Classical.choice`, and `Quot.sound`.
 
 ## Development

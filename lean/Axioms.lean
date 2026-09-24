@@ -19,3 +19,5 @@ import ChairWarp
 #print axioms chair44_warp_concrete
 #print axioms warp_x0
 #print axioms warp_image_ne
+#print axioms equivariant_fixes_grid
+#print axioms warp_fixes_grid
