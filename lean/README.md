@@ -43,7 +43,7 @@ non-periodic and different from Chair44.
 | Theorem | `k` | `e` | certificate point, `V` there |
 |---|---|---|---|
 | `familyA` | (1, ½, ½) | (1,1,0) | (¾, ½, 0), (0,0,−4) |
-| `familyB` | (3/2, 1, ½) | (1,0,0) | (¼, ½, 0), (0,0,−4) |
+| `familyB` | (0, 2, 1) | (1,0,0) | (⅛, ¼, 0), (0,0,−4) |
 | `familyC` | (3/2, 3/2, 1) | (1,0,0) | (¼, ½, 0), (0,0,−4) |
 
 `Congruence.lean`: `congr_eq_one` — any isometry between two such warped tiles (any certified

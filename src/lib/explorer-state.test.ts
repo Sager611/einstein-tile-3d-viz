@@ -21,6 +21,7 @@ describe('explorer state', () => {
       hiddenGroups: ['families:0', 'orientation:2'],
       warp: 0.6,
       warpShape: 'c',
+      proof: false,
     };
 
     expect(decodeSettings(encodeSettings(settings))).toEqual(settings);
@@ -43,6 +44,7 @@ describe('explorer state', () => {
       hiddenGroups: ['families:0'],
       warp: 0,
       warpShape: 'a',
+      proof: true,
     });
 
     expect(normalizeSettings({ level: 0, relief: 80 })).toMatchObject({ level: 0, relief: 80 });

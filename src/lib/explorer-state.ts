@@ -19,6 +19,8 @@ export interface ExplorerSettings {
   /** Equivariant face warp (0 = the original flat-faced Chair44). */
   warp: number;
   warpShape: WarpShape;
+  /** Proof overlay on one warped tile: ghost Chair44, Lean's pushed-out point, the four fixed corners. */
+  proof: boolean;
 }
 
 export const DEFAULT_SETTINGS: ExplorerSettings = {
@@ -33,6 +35,7 @@ export const DEFAULT_SETTINGS: ExplorerSettings = {
   hiddenGroups: [],
   warp: 0,
   warpShape: 'a',
+  proof: true,
 };
 
 export interface SceneHandle {
@@ -82,6 +85,7 @@ export function normalizeSettings(input: Partial<ExplorerSettings>): ExplorerSet
     hiddenGroups: normalizeHiddenGroups(source.hiddenGroups),
     warp: clamp(source.warp, 0, 1, DEFAULT_SETTINGS.warp),
     warpShape: WARP_SHAPES.includes(source.warpShape as WarpShape) ? (source.warpShape as WarpShape) : DEFAULT_SETTINGS.warpShape,
+    proof: typeof source.proof === 'boolean' ? source.proof : DEFAULT_SETTINGS.proof,
   };
 }
 
@@ -98,6 +102,7 @@ const settingKeys = {
   hidden: 'hidden',
   warp: 'warp',
   warpShape: 'face',
+  proof: 'proof',
 } as const;
 
 export function encodeSettings(settings: ExplorerSettings): string {
@@ -117,6 +122,7 @@ export function encodeSettings(settings: ExplorerSettings): string {
   if (normalized.warp > 0) {
     params.set(settingKeys.warp, String(normalized.warp));
     params.set(settingKeys.warpShape, normalized.warpShape);
+    params.set(settingKeys.proof, normalized.proof ? '1' : '0');
   }
   return `#${params.toString()}`;
 }
@@ -161,5 +167,6 @@ export function decodeSettings(hash: string): ExplorerSettings {
     hiddenGroups: readHiddenGroups(params, settingKeys.hidden),
     warp: readNumber(params, settingKeys.warp),
     warpShape: (params.get(settingKeys.warpShape) ?? undefined) as WarpShape | undefined,
+    proof: readBoolean(params, settingKeys.proof),
   });
 }

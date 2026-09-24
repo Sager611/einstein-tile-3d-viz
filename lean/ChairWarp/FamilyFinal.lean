@@ -12,7 +12,7 @@ the field pushes straight out of the solid), every amplitude `0 < s ≤ 10⁻⁹
 3. has only non-periodic tilings of that form, and
 4. differs from Chair44.
 
-Families: `famA` (the original wave, `k = (1, ½, ½)`, `e = (1,1,0)`), `famB` (`k = (3/2, 1, ½)`,
+Families: `famA` (the original wave, `k = (1, ½, ½)`, `e = (1,1,0)`), `famB` (`k = (0, 2, 1)`,
 `e = (1,0,0)`) and `famC` (`k = (3/2, 3/2, 1)`, `e = (1,0,0)`).
 -/
 
@@ -146,7 +146,7 @@ end WaveSpec
 /-! ## The three families -/
 
 def famA : WaveSpec := ⟨![2, 1, 1], ![1, 1, 0]⟩
-def famB : WaveSpec := ⟨![3, 2, 1], ![1, 0, 0]⟩
+def famB : WaveSpec := ⟨![0, 4, 2], ![1, 0, 0]⟩
 def famC : WaveSpec := ⟨![3, 3, 2], ![1, 0, 0]⟩
 
 lemma famA_good : famA.Good := by decide +kernel
@@ -156,7 +156,7 @@ lemma famC_good : famC.Good := by decide +kernel
 lemma famA_cert : famA.Cert ![6, 4, 0] :=
   ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide +kernel, by decide +kernel,
     by decide +kernel, by decide +kernel, by decide +kernel, by decide +kernel⟩
-lemma famB_cert : famB.Cert ![2, 4, 0] :=
+lemma famB_cert : famB.Cert ![1, 2, 0] :=
   ⟨by decide +kernel, by decide +kernel, by decide +kernel, by decide +kernel, by decide +kernel,
     by decide +kernel, by decide +kernel, by decide +kernel, by decide +kernel⟩
 lemma famC_cert : famC.Cert ![2, 4, 0] :=

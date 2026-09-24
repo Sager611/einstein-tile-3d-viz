@@ -26,7 +26,7 @@ type Family = {
 
 export const FAMILIES: Record<WarpShape, Family> = {
   a: { k2: [2, 1, 1], e: [1, 1, 0], maxScale: 0.8 / 36, certificate: { point: [0.75, 0.5, 0], value: [0, 0, -4] } },
-  b: { k2: [3, 2, 1], e: [1, 0, 0], maxScale: 0.8 / 68, certificate: { point: [0.25, 0.5, 0], value: [0, 0, -4] } },
+  b: { k2: [0, 4, 2], e: [1, 0, 0], maxScale: 0.8 / 96, certificate: { point: [0.125, 0.25, 0], value: [0, 0, -4] } },
   c: { k2: [3, 3, 2], e: [1, 0, 0], maxScale: 0.8 / 72, certificate: { point: [0.25, 0.5, 0], value: [0, 0, -4] } },
 };
 
@@ -79,8 +79,11 @@ export function familyField(shape: WarpShape, x: Vec3): Vec3 {
   return out;
 }
 
-/** Magnification of the displayed warp relative to the largest proved amplitude 10⁻⁹. */
-export const magnification = (warp: Warp): number => (warp.amount * FAMILIES[warp.shape].maxScale) / LEAN_EPS;
+/** The slider picks the proved amplitude s = amount · 10⁻⁹ (each s is a distinct proved tile). */
+export const amplitude = (amount: number): number => amount * LEAN_EPS;
+
+/** Fixed display magnification of a family: displacement shown = magnification · s · V. */
+export const magnification = (shape: WarpShape): number => FAMILIES[shape].maxScale / LEAN_EPS;
 
 export type Warp = { shape: WarpShape; amount: number };
 

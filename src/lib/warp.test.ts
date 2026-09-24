@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getTiles, rotateVector, transformPoint, carrierCells, type Vec3 } from './chair44';
-import { FAMILIES, ROTATIONS, WARP_SHAPES, createWarpedChairGeometry, familyField, inBcc, magnification, warpDisplacement } from './warp';
+import { FAMILIES, ROTATIONS, amplitude, WARP_SHAPES, createWarpedChairGeometry, familyField, inBcc, magnification, warpDisplacement } from './warp';
 
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
@@ -87,6 +87,18 @@ describe('Lean-proven warp families', () => {
     expect(worst).toBeGreaterThan(3);
   });
 
+  it('families look different: face fields are pairwise far from equal or opposite', () => {
+    // Only grid faces shape the displayed tile, so compare the normal displacement on face z = 0.
+    const samples: Vec3[] = [];
+    for (let i = 0; i < 24; i += 1) for (let j = 0; j < 24; j += 1) samples.push([(i + 0.5) / 24, (j + 0.5) / 24, 0]);
+    const face = WARP_SHAPES.map((shape) => samples.map((p) => familyField(shape, p)[2]));
+    const dot = (u: number[], v: number[]) => u.reduce((sum, value, index) => sum + value * v[index], 0);
+    for (let a = 0; a < face.length; a += 1) for (let b = a + 1; b < face.length; b += 1) {
+      const correlation = dot(face[a], face[b]) / Math.sqrt(dot(face[a], face[a]) * dot(face[b], face[b]));
+      expect(Math.abs(correlation)).toBeLessThan(0.5);
+    }
+  });
+
   it('families are pairwise different fields', () => {
     const p: Vec3 = [0.3, 0.7, 0.1];
     const [a, b, c] = WARP_SHAPES.map((shape) => familyField(shape, p));
@@ -94,8 +106,14 @@ describe('Lean-proven warp families', () => {
     expect(Math.hypot(b[0] - c[0], b[1] - c[1], b[2] - c[2])).toBeGreaterThan(0.1);
   });
 
-  it('magnification is relative to the proved amplitude 1e-9', () => {
-    expect(magnification({ shape: 'a', amount: 1 })).toBeCloseTo(FAMILIES.a.maxScale / 1e-9, 3);
+  it('slider amount maps to the proved amplitude and the view magnifies it by a fixed factor', () => {
+    expect(amplitude(1)).toBe(1e-9);
+    expect(amplitude(0.25)).toBeCloseTo(2.5e-10, 20);
+    for (const shape of WARP_SHAPES) {
+      const shown = warpDisplacement([0.3, 0.6, 0.2], { shape, amount: 0.4 });
+      const exact = familyField(shape, [0.3, 0.6, 0.2]).map((v) => amplitude(0.4) * v);
+      for (let i = 0; i < 3; i += 1) expect(shown[i]).toBeCloseTo(magnification(shape) * exact[i], 12);
+    }
   });
 
   it.each(WARP_SHAPES)('%s: the magnified view stays a homeomorphism (sampled Lipschitz constant of s·V below 1)', (shape) => {

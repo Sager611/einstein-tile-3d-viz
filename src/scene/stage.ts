@@ -54,6 +54,7 @@ function settingsEqual(first: ExplorerSettings, second: ExplorerSettings): boole
     first.autoRotate === second.autoRotate &&
     first.warp === second.warp &&
     first.warpShape === second.warpShape &&
+    first.proof === second.proof &&
     firstHiddenGroups.length === secondHiddenGroups.length &&
     firstHiddenGroups.every((group, index) => group === secondHiddenGroups[index])
   );

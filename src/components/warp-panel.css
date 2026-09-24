@@ -65,3 +65,45 @@
   display: flex;
   gap: 6px;
 }
+
+.warp-label {
+  font-style: italic;
+  font-family: "Times New Roman", serif;
+  font-size: 15px;
+  cursor: help;
+}
+
+.warp-proof {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.warp-legend {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.warp-legend i {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.warp-legend i[data-kind="ghost"] {
+  border-radius: 2px;
+  border: 1.5px solid #0f172a;
+  background: rgb(15 23 42 / 0.1);
+}
+
+.warp-legend i[data-kind="point"] {
+  background: #dc2626;
+}
+
+.warp-legend i[data-kind="corner"] {
+  background: #0f172a;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px #cbd5e1;
+}
