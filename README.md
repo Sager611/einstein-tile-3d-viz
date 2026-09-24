@@ -17,6 +17,15 @@ A light-canvas React/Vite/TypeScript/Three.js/shadcn viewer for an independent r
 
 Adjust levels, spread, and layers; orbit, pan, and zoom; use presets; select/focus tiles; adjust one-tile height. The color legend hides/shows current-mode groups or **Show all**; its filters persist in shareable URL hashes. Optional UI affordances provide tooltips/Info and PNG export.
 
+## Warp and Lean proof
+
+The **Warp** drawer (wave button) deforms space by maps that commute with every motion used by Chair44 tilings (the 24 cube rotations with the body-centred cubic lattice, space group I432). Such a map turns every Chair44 tiling into a tiling by one new, congruent solid.
+
+- **Lean** (default): the warp proved in [`lean/`](lean/README.md). Lean 4 + Mathlib prove, assuming only the paper's Theorem 1.2, that the warped tiles tile space, that the warped solid differs from Chair44 and has no symmetry, and that warped Chair44 tilings have no translational period (`chair44_warp_concrete`). The proof uses a displacement below 3.6·10⁻⁸; the view magnifies it and labels which magnifications stay inside the proved Lipschitz bound.
+- **Nubs / Wave / Ridge**: face-local illustrations (face shapes with `f(v,u) = −f(u,v)`); their tiling property is checked numerically, not in Lean.
+
+The [Lean proof workflow](.github/workflows/lean.yml) rebuilds `lean/` and audits that every theorem uses only `propext`, `Classical.choice`, and `Quot.sound`.
+
 ## Development
 
 ```sh

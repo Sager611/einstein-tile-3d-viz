@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react"
 import { useState } from "react"
-import { Microscope, Orbit, Pause, ScanSearch, Settings } from "lucide-react"
+import { Microscope, Orbit, Pause, ScanSearch, Settings, Waves } from "lucide-react"
 
 import { MAX_LEVEL } from "@/lib/chair44"
 import { OVERVIEW_LEVEL, type ColorMode, type ExplorerSettings } from "@/lib/explorer-state"
@@ -26,6 +26,8 @@ export type ControlDockProps = {
   settings: ExplorerSettings
   onChange: (patch: Partial<ExplorerSettings>) => void
   onInspect: () => void
+  warpOpen: boolean
+  onWarp: () => void
 }
 
 type IconButtonProps = {
@@ -142,7 +144,7 @@ function HeightReset({
   return button
 }
 
-export function ControlDock({ settings, onChange, onInspect }: ControlDockProps) {
+export function ControlDock({ settings, onChange, onInspect, warpOpen, onWarp }: ControlDockProps) {
   const [moreOpen, setMoreOpen] = useState(false)
   const effectiveRelief = settings.relief
   const reliefIsMagnified = effectiveRelief > 1
@@ -204,6 +206,9 @@ export function ControlDock({ settings, onChange, onInspect }: ControlDockProps)
             </IconButton>
             <IconButton label="Inspect" onClick={handleInspect}>
               <Microscope data-icon="inspect" />
+            </IconButton>
+            <IconButton label="Warp" aria-pressed={warpOpen} onClick={onWarp}>
+              <Waves data-icon="warp" />
             </IconButton>
             <IconButton label="Settings" onClick={openMore}>
               <Settings data-icon="settings" />

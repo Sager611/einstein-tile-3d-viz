@@ -1,4 +1,5 @@
 import { MAX_LEVEL } from './chair44';
+import { WARP_SHAPES, type WarpShape } from './warp';
 
 export type ColorMode = 'families' | 'porcelain' | 'orientation';
 export type ViewPreset = 'iso' | 'top' | 'front';
@@ -15,6 +16,9 @@ export interface ExplorerSettings {
   colorMode: ColorMode;
   autoRotate: boolean;
   hiddenGroups: string[];
+  /** Equivariant face warp (0 = the original flat-faced Chair44). */
+  warp: number;
+  warpShape: WarpShape;
 }
 
 export const DEFAULT_SETTINGS: ExplorerSettings = {
@@ -27,6 +31,8 @@ export const DEFAULT_SETTINGS: ExplorerSettings = {
   colorMode: 'orientation',
   autoRotate: false,
   hiddenGroups: [],
+  warp: 0,
+  warpShape: 'lean',
 };
 
 export interface SceneHandle {
@@ -74,6 +80,8 @@ export function normalizeSettings(input: Partial<ExplorerSettings>): ExplorerSet
     colorMode: isColorMode(source.colorMode) ? source.colorMode : DEFAULT_SETTINGS.colorMode,
     autoRotate: typeof source.autoRotate === 'boolean' ? source.autoRotate : DEFAULT_SETTINGS.autoRotate,
     hiddenGroups: normalizeHiddenGroups(source.hiddenGroups),
+    warp: clamp(source.warp, 0, 1, DEFAULT_SETTINGS.warp),
+    warpShape: WARP_SHAPES.includes(source.warpShape as WarpShape) ? (source.warpShape as WarpShape) : DEFAULT_SETTINGS.warpShape,
   };
 }
 
@@ -88,6 +96,8 @@ const settingKeys = {
   color: 'colors',
   rotate: 'rotate',
   hidden: 'hidden',
+  warp: 'warp',
+  warpShape: 'face',
 } as const;
 
 export function encodeSettings(settings: ExplorerSettings): string {
@@ -103,6 +113,11 @@ export function encodeSettings(settings: ExplorerSettings): string {
     [settingKeys.rotate]: normalized.autoRotate ? '1' : '0',
     [settingKeys.hidden]: normalized.hiddenGroups.join(','),
   });
+  // Warps are only encoded when active, so ordinary links stay unchanged.
+  if (normalized.warp > 0) {
+    params.set(settingKeys.warp, String(normalized.warp));
+    params.set(settingKeys.warpShape, normalized.warpShape);
+  }
   return `#${params.toString()}`;
 }
 
@@ -144,5 +159,7 @@ export function decodeSettings(hash: string): ExplorerSettings {
     colorMode: readColorMode(params, settingKeys.color),
     autoRotate: readBoolean(params, settingKeys.rotate),
     hiddenGroups: readHiddenGroups(params, settingKeys.hidden),
+    warp: readNumber(params, settingKeys.warp),
+    warpShape: (params.get(settingKeys.warpShape) ?? undefined) as WarpShape | undefined,
   });
 }

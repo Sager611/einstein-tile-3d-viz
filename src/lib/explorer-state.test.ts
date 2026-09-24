@@ -19,6 +19,8 @@ describe('explorer state', () => {
       colorMode: 'orientation',
       autoRotate: true,
       hiddenGroups: ['families:0', 'orientation:2'],
+      warp: 0.6,
+      warpShape: 'ridge',
     };
 
     expect(decodeSettings(encodeSettings(settings))).toEqual(settings);
@@ -39,6 +41,8 @@ describe('explorer state', () => {
       colorMode: 'orientation',
       autoRotate: true,
       hiddenGroups: ['families:0'],
+      warp: 0,
+      warpShape: 'lean',
     });
 
     expect(normalizeSettings({ level: 0, relief: 80 })).toMatchObject({ level: 0, relief: 80 });
@@ -59,6 +63,11 @@ describe('explorer state', () => {
     expect(decodeSettings('')).toEqual(DEFAULT_SETTINGS);
     expect(decodeSettings('#level=&spread=&slice=&relief=')).toEqual(DEFAULT_SETTINGS);
     expect(decodeSettings('#color=orientation')).toMatchObject({ hiddenGroups: [] });
+  });
+
+  it('encodes warps only when active', () => {
+    expect(encodeSettings(DEFAULT_SETTINGS)).not.toContain('warp');
+    expect(decodeSettings('#warp=2&face=bogus')).toMatchObject({ warp: 1, warpShape: 'lean' });
   });
 
   it('defaults old links to rotation colors', () => {

@@ -1,0 +1,42 @@
+---
+name: Lean proof
+
+"on":
+  push:
+    branches: [main]
+    paths: ['lean/**', '.github/workflows/lean.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ELAN_URL: >-
+    https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lean
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install elan
+        run: |
+          curl -sSfL "$ELAN_URL" -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Fetch Mathlib cache
+        run: lake exe cache get
+      - name: Build proofs
+        run: lake build
+      - name: Audit axioms and forbidden tactics
+        run: |
+          lake env lean Axioms.lean | tee axioms.txt
+          allowed="\[propext, Classical.choice, Quot.sound\]"
+          if grep -v "$allowed" axioms.txt; then exit 1; fi
+          pattern='sorry|native_decide|admit|^axiom'
+          if grep -rnE "$pattern" ChairWarp ChairWarp.lean; then exit 1; fi

@@ -19,6 +19,15 @@ import { getTiles, MAX_LEVEL, transformPoint, type TilePose } from "../lib/chair
 import { colorGroupKey, SELECTED_COLOR, tileColor } from "../lib/color-groups";
 import { createCarrierEdges, createCarrierGeometry, createChairGeometry } from "../lib/geometry";
 import { OVERVIEW_LEVEL, type ExplorerSettings } from "../lib/explorer-state";
+import { createWarpedChairGeometry } from "../lib/warp";
+
+/** Exact tile geometry: the feature-decorated Chair44, or its equivariant face warp (features omitted). */
+const exactKey = (settings: ExplorerSettings): string =>
+  settings.warp > 0 ? `warp|${settings.warp}|${settings.warpShape}` : `flat|${settings.relief}`;
+const exactGeometry = (settings: ExplorerSettings): BufferGeometry =>
+  settings.warp > 0
+    ? createWarpedChairGeometry({ shape: settings.warpShape, amount: settings.warp }, 16)
+    : createChairGeometry(settings.relief);
 
 const FEATURE_TINT = 0.62;
 const OVERVIEW_TEXTURE_SIZE = 256;
@@ -116,7 +125,8 @@ export class TileWorld {
   private readonly matrices: Matrix4[] = [];
   private poses: TilePose[] = [];
   private level = -1;
-  private relief: number;
+  private geometryKey: string;
+  private overviewKey = '';
   private readonly geometry: BufferGeometry;
   private readonly overviewGeometry = createCarrierGeometry();
   private readonly bodyMaterial: MeshStandardMaterial;
@@ -128,8 +138,8 @@ export class TileWorld {
   private promotedIndex = -1;
 
   constructor(settings: ExplorerSettings) {
-    this.relief = settings.relief;
-    this.geometry = createChairGeometry(settings.relief);
+    this.geometryKey = exactKey(settings);
+    this.geometry = exactGeometry(settings);
     const bodyMaterial = new MeshStandardMaterial({ color: "#ffffff", roughness: 0.8 });
     this.bodyMaterial = bodyMaterial;
     const featureMaterial = new MeshStandardMaterial({ vertexColors: settings.showFeatures, roughness: 0.8 });
@@ -170,10 +180,17 @@ export class TileWorld {
     const overview = settings.level >= OVERVIEW_LEVEL;
     this.body.material = overview ? [this.overviewMaterial] : [this.bodyMaterial, this.featureMaterial];
     this.body.geometry = overview ? this.overviewGeometry : this.geometry;
-    if (settings.relief !== this.relief) {
-      const replacement = createChairGeometry(settings.relief);
+    if (exactKey(settings) !== this.geometryKey) {
+      const replacement = exactGeometry(settings);
       this.geometry.copy(replacement); replacement.dispose();
-      this.relief = settings.relief;
+      this.geometryKey = exactKey(settings);
+    }
+    // Overview warp: coarse warped carrier up to level 5; level 6 stays flat for performance.
+    const overviewKey = settings.warp > 0 && settings.level <= 5 ? `${settings.warp}|${settings.warpShape}` : '';
+    if (overview && overviewKey !== this.overviewKey) {
+      const replacement = overviewKey ? createWarpedChairGeometry({ shape: settings.warpShape, amount: settings.warp }, 3) : createCarrierGeometry();
+      this.overviewGeometry.copy(replacement); replacement.dispose();
+      this.overviewKey = overviewKey;
     }
     if (this.featureMaterial.vertexColors !== settings.showFeatures) {
       this.featureMaterial.vertexColors = settings.showFeatures;

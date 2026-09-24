@@ -52,6 +52,8 @@ function settingsEqual(first: ExplorerSettings, second: ExplorerSettings): boole
     first.showEdges === second.showEdges &&
     first.colorMode === second.colorMode &&
     first.autoRotate === second.autoRotate &&
+    first.warp === second.warp &&
+    first.warpShape === second.warpShape &&
     firstHiddenGroups.length === secondHiddenGroups.length &&
     firstHiddenGroups.every((group, index) => group === secondHiddenGroups[index])
   );

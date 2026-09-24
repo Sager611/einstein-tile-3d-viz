@@ -1,0 +1,46 @@
+# ChairWarp — Lean 4 proofs for an equivariant warp of Chair44
+
+Build: `lake build` (Lean `v4.35.0-rc2`, Mathlib). Axiom audit: `lake env lean Axioms.lean`
+→ every theorem depends only on `propext`, `Classical.choice`, `Quot.sound`. No `sorry`,
+`admit`, `native_decide`, or `axiom` declarations.
+
+## Main theorem — `chair44_warp_concrete` (`ChairWarp/Final.lean`)
+
+Let `Q ⊆ ℝ³` be Chair44, defined concretely in Lean from the paper's panel recipe (seven-cube
+carrier, 192 square-pyramid bumps and dents). Let `T = (g i '' Q)` be a tiling of `ℝ³` by copies of
+`Q` whose placements lie in Chair44's motion group `GammaGeom` and which has no nonzero translational
+symmetry. Then for the explicit homeomorphism `warp : ℝ³ ≃ₜ ℝ³`:
+
+1. `(g i '' warp '' Q)` is a tiling of `ℝ³` by congruent copies of the single solid `warp '' Q`;
+2. `warp '' Q` has **no non-identity self-isometry** (`warp_rigid`);
+3. the warped tiling has **no nonzero translational symmetry**;
+4. the new solid genuinely differs from Chair44: `warp '' Q ≠ Q` (`warp_image_ne`).
+
+## What is proved
+
+| File | Content |
+|---|---|
+| `Transfer.lean` | General: an equivariant homeomorphism maps tilings to tilings; symmetries transfer under rigidity. |
+| `Gamma.lean` | `Γ = R24 ⋉ BCC` is closed; hierarchy tiles and all 44 atlas contacts lie in `Γ`; face transitivity; face stabilizer. |
+| `Geometry.lean` | Integer poses are isometries of `ℝ³`; composition matches; `GammaGeom` = generated subgroup. |
+| `Warp.lean` | `field = ε ∑_{R∈R24} cos(2π k·Rx) R⁻¹e₁` (`k = (1,1/2,1/2)`, `e₁ = (1,1,0)`, `ε = 10⁻⁹`): lattice-periodic, rotation-equivariant, `1/5`-Lipschitz ⇒ `warp = id + field` is a homeomorphism commuting with `GammaGeom`; `‖warp x − x‖ ≤ 36ε`; exact certificate `warp (3/4,1/2,0) = (3/4,1/2,−4ε)` (the `√2` parts of the eighth-turn cosines cancel, checked by `decide`). The field is chiral: it has non-zero normal components on grid faces, so faces genuinely bend. |
+| `Main.lean` | Symmetries in `Γ` transfer both ways; registration glue (`placements_mem`); generic main theorem. |
+| `Tile.lean` | Chair44 `Q` as a subset of `ℝ³` (paper §2 hypograph definition); cover by 103 integer boxes; coordinate bounds; distance from `(2,2,2)`; corners in `Q`; 5 feature probes (height-12 bump over a dent) with `10⁻⁴` clearance — all box facts by `decide`. |
+| `Diam.lean` | Points of `Q` almost `√12` apart sit at opposite box corners (not `0`, not `(2,2,2)`). |
+| `Pin.lean` | Near-symmetries of `Q` map corners to corners, preserve integer squared distances exactly, are pinned to one of 12 box symmetries (`decide` over corner quadruples), are affinely close to it on the whole box; end-swapping symmetries are excluded via `(2,2,2)`, the 5 non-trivial axis permutations via the probes ⇒ `‖σ x − x‖ ≤ 300 d` (`near_id_on_box`). |
+| `Ergodic.lean` | Mean ergodic theorem ⇒ an isometry all of whose powers stay within `C < 1/2` of the identity on a unit ball is the identity. |
+| `Final.lean` | Every self-isometry of `warp '' Q` and all its powers are near-symmetries of `Q` with defect `72ε` ⇒ `warp_rigid`; `warp_image_ne` (the certificate point of the bottom face is pushed out of every box covering `Q`); `chair44_warp_concrete`. |
+
+## Hypotheses (from arXiv 2609.19214, Theorem 1.2)
+
+* **Registration:** after one ambient isometry, neighbouring tiles differ by contacts of the atlas
+  `A44`, which is proved here to lie in `Γ`; `placements_mem` then gives `hg`.
+* **Non-periodicity:** `Per(T) = {0}`.
+
+These are the paper's results about the unwarped Chair44 and are not re-proved here (the author's
+own Lean development covers them). Everything specific to the warp is proved.
+
+## Scope
+
+The theorem describes warped Chair44 tilings. It does not claim that every tiling by `warp '' Q`
+arises this way (that would require redoing the paper's registration argument for the warped solid).

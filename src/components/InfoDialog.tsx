@@ -41,6 +41,15 @@ export function InfoDialog({ open, onOpenChange }: InfoDialogProps) {
             <p>These are preprints; no journal-acceptance claim is made.</p>
           </section>
 
+          <section>
+            <p>
+              Warp: a deformation of space that commutes with every motion used by Chair44
+              tilings turns each tiling into a tiling by one new solid. For the Lean warp, Lean 4
+              proves the warped tile has no symmetry and warped tilings have no period, assuming
+              only the paper's theorem. Other warp shapes are illustrations.
+            </p>
+          </section>
+
           <p className="sr-only">
             At overview levels, all tiles and placements are retained; micro-surface keys and
             unselected outlines are omitted for performance; selected tiles have exact detail.
@@ -59,6 +68,9 @@ export function InfoDialog({ open, onOpenChange }: InfoDialogProps) {
             </a>
             <a href="https://github.com/Sager611/einstein-tile-3d-viz/blob/main/docs/geometry.md" target="_blank" rel="noopener noreferrer">
               Reconstruction notes
+            </a>
+            <a href="https://github.com/Sager611/einstein-tile-3d-viz/tree/main/lean" target="_blank" rel="noopener noreferrer">
+              Lean proof
             </a>
           </nav>
 

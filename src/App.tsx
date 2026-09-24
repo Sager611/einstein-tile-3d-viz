@@ -19,6 +19,7 @@ import { ColorLegend } from "./components/ColorLegend"
 import { ControlDock, IconButton } from "./components/ControlDock"
 import { InfoDialog } from "./components/InfoDialog"
 import { SceneView } from "./components/SceneView"
+import { WarpPanel } from "./components/WarpPanel"
 import {
   DEFAULT_SETTINGS,
   decodeSettings,
@@ -46,6 +47,7 @@ export default function App() {
   const [notice, setNotice] = useState<string | null>(null)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [orthographic, setOrthographic] = useState(false)
+  const [warpOpen, setWarpOpen] = useState(false)
 
   const update = useCallback((patch: Partial<ExplorerSettings>) => {
     setSettings((current) => normalizeSettings({ ...current, ...patch }))
@@ -258,7 +260,11 @@ export default function App() {
                 showFeatures: true,
               })
             }
+            warpOpen={warpOpen}
+            onWarp={() => setWarpOpen(!warpOpen)}
           />
+
+          <WarpPanel open={warpOpen} onOpenChange={setWarpOpen} settings={settings} onChange={update} />
 
           {sceneError && (
             <div className="scene-error" role="alert">

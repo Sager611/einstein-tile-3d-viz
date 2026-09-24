@@ -1,0 +1,21 @@
+import ChairWarp
+#print axioms Tiling.warp
+#print axioms Tiling.warp_symm
+#print axioms level_inGamma
+#print axioms atlas_inGamma
+#print axioms face_transitive
+#print axioms stabilizer_F0
+#print axioms toIso_comp
+#print axioms warp_comm
+#print axioms warp_ne_id
+#print axioms norm_warp_sub_le
+#print axioms placements_mem
+#print axioms Q_sub
+#print axioms probe_far
+#print axioms near_diametral
+#print axioms near_id_on_box
+#print axioms isometry_eq_one_of_near
+#print axioms warp_rigid
+#print axioms chair44_warp_concrete
+#print axioms warp_x0
+#print axioms warp_image_ne
