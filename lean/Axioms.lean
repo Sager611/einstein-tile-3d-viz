@@ -24,3 +24,7 @@ import ChairWarp
 #print axioms familyA
 #print axioms familyB
 #print axioms familyC
+#print axioms WaveSpec.congr_eq_one
+#print axioms familyA_noncongruent
+#print axioms familyB_noncongruent
+#print axioms familyC_noncongruent

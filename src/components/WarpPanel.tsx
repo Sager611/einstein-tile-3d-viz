@@ -24,7 +24,7 @@ const LEAN_PROOF_URL = "https://github.com/Sager611/einstein-tile-3d-viz/tree/ma
 function familyTooltip(shape: WarpShape): string {
   const { k2, e } = FAMILIES[shape]
   const k = k2.map((n) => (n % 2 === 0 ? String(n / 2) : `${n}/2`)).join(", ")
-  return `Family ${SHAPE_LABELS[shape]}: V(x) = Σ over the 24 rotations R of cos(2π k·Rx) R⁻¹e, k = (${k}), e = (${e.join(", ")}). Lean theorem family${SHAPE_LABELS[shape]}: for every amplitude 0 < s ≤ 10⁻⁹ the solid (id + sV)(Chair44) tiles space, has no symmetry, tiles only non-periodically (given the paper's theorem), and differs from Chair44. Not yet proved: that different s give non-congruent solids.`
+  return `Family ${SHAPE_LABELS[shape]}: V(x) = Σ over the 24 rotations R of cos(2π k·Rx) R⁻¹e, k = (${k}), e = (${e.join(", ")}). Lean theorem family${SHAPE_LABELS[shape]}: for every amplitude 0 < s ≤ 10⁻⁹ the solid (id + sV)(Chair44) tiles space, has no symmetry, tiles only non-periodically (given the paper's theorem), and differs from Chair44; different s give non-congruent solids (family${SHAPE_LABELS[shape]}_noncongruent), so the family is infinite.`
 }
 
 function superscript(n: number): string {
@@ -39,7 +39,7 @@ function formatMagnification(value: number): string {
 }
 
 const EXPLAINER =
-  "Every Chair44 tiling places its tiles by motions of one group: the 24 cube rotations combined with the body-centred cubic lattice (space group I432). A deformation of space that commutes with that group turns every tiling into a tiling by one new solid. A, B, C are three such deformations, each a whole family in its amplitude s, all proved in Lean. The true shapes differ from Chair44 by at most 10⁻⁷; the slider magnifies the difference."
+  "Every Chair44 tiling places its tiles by motions of one group: the 24 cube rotations combined with the body-centred cubic lattice (space group I432). A deformation of space that commutes with that group turns every tiling into a tiling by one new solid. A, B, C are three such deformations, each an infinite family of pairwise non-congruent tiles (one per amplitude s), all proved in Lean. The true shapes differ from Chair44 by at most 10⁻⁷; the slider magnifies the difference."
 
 function statusLabel(settings: ExplorerSettings): string {
   if (settings.warp === 0) return "Original Chair44"

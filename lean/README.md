@@ -46,7 +46,11 @@ non-periodic and different from Chair44.
 | `familyB` | (3/2, 1, ½) | (1,0,0) | (¼, ½, 0), (0,0,−4) |
 | `familyC` | (3/2, 3/2, 1) | (1,0,0) | (¼, ½, 0), (0,0,−4) |
 
-Not proved: that different `s` (or different families) give non-congruent solids.
+`Congruence.lean`: `congr_eq_one` — any isometry between two such warped tiles (any certified
+waves, any amplitudes ≤ 10⁻⁹) is the identity (it must fix four convex corners of Chair44, where
+every warped tile is a narrow cone). `familyA/B/C_noncongruent`: distinct amplitudes `s ≠ t` give
+non-congruent solids, so **each family contains infinitely many pairwise non-congruent tiles**.
+Not proved: that tiles from *different* families are non-congruent.
 
 ## Obstruction (`ChairWarp/Obstruction.lean`)
 

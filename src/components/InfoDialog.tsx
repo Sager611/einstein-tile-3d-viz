@@ -44,8 +44,8 @@ export function InfoDialog({ open, onOpenChange }: InfoDialogProps) {
           <section>
             <p>
               Warp: a deformation of space that commutes with every motion used by Chair44
-              tilings turns each tiling into a tiling by one new solid. Families A, B, C: for every
-              amplitude up to 10⁻⁹, Lean 4 proves the warped tile has no symmetry and its tilings
+              tilings turns each tiling into a tiling by one new solid. Families A, B, C (each infinite:
+              distinct amplitudes give non-congruent tiles): for every amplitude up to 10⁻⁹, Lean 4 proves the warped tile has no symmetry and its tilings
               have no period, assuming only the paper's theorem. The view magnifies the true
               displacement. Such warps provably
               fix every cube corner, so they bend the arms but never resize them.

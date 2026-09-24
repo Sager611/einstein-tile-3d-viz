@@ -11,3 +11,4 @@ import ChairWarp.Final
 import ChairWarp.Obstruction
 import ChairWarp.Family
 import ChairWarp.FamilyFinal
+import ChairWarp.Congruence
