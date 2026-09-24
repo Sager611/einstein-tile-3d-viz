@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { ExplorerSettings } from "@/lib/explorer-state"
-import { LEAN_CERTIFIED_AMOUNT, WARP_SHAPES, leanMagnification, type WarpShape } from "@/lib/warp"
+import { FAMILIES, WARP_SHAPES, magnification, type WarpShape } from "@/lib/warp"
 
 import "./warp-panel.css"
 
@@ -17,15 +17,15 @@ type WarpPanelProps = {
   onChange: (patch: Partial<ExplorerSettings>) => void
 }
 
-const SHAPE_LABELS: Record<WarpShape, string> = { lean: "Lean", nubs: "Nubs", wave: "Wave", ridge: "Ridge" }
+const SHAPE_LABELS: Record<WarpShape, string> = { a: "A", b: "B", c: "C" }
 
 const LEAN_PROOF_URL = "https://github.com/Sager611/einstein-tile-3d-viz/tree/main/lean"
 
-const LEAN_TOOLTIP =
-  "Proved in Lean 4 (theorem chair44_warp_concrete): these warped tiles fill space, the warped tile differs from Chair44 and has no symmetry, and warped Chair44 tilings have no period. The proof uses a displacement of at most 3.6·10⁻⁸; the view magnifies it, and up to the certified mark the same Lipschitz bound still guarantees a valid warp."
-
-const FACE_TOOLTIP =
-  "Illustration. The tiling is checked numerically. Ruling out periods also needs this warped tile to have no symmetry, which Lean proves only for the Lean warp."
+function familyTooltip(shape: WarpShape): string {
+  const { k2, e } = FAMILIES[shape]
+  const k = k2.map((n) => (n % 2 === 0 ? String(n / 2) : `${n}/2`)).join(", ")
+  return `Family ${SHAPE_LABELS[shape]}: V(x) = Σ over the 24 rotations R of cos(2π k·Rx) R⁻¹e, k = (${k}), e = (${e.join(", ")}). Lean theorem family${SHAPE_LABELS[shape]}: for every amplitude 0 < s ≤ 10⁻⁹ the solid (id + sV)(Chair44) tiles space, has no symmetry, tiles only non-periodically (given the paper's theorem), and differs from Chair44. Not yet proved: that different s give non-congruent solids.`
+}
 
 function superscript(n: number): string {
   const map: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" }
@@ -39,28 +39,19 @@ function formatMagnification(value: number): string {
 }
 
 const EXPLAINER =
-  "Every Chair44 tiling places its tiles by motions of one group: the 24 cube rotations combined with the body-centred cubic lattice (space group I432). Any deformation of space that commutes with that group turns every tiling into a tiling by one new, congruent solid. Lean: a smooth wave averaged over the 24 rotations, proved to be such a deformation. Nubs, Wave, Ridge: face shapes f(u,v) = −f(v,u), since each unit face is fixed only by a diagonal half-turn."
-
-const isCertified = (settings: ExplorerSettings): boolean =>
-  settings.warpShape === "lean" && settings.warp <= LEAN_CERTIFIED_AMOUNT
+  "Every Chair44 tiling places its tiles by motions of one group: the 24 cube rotations combined with the body-centred cubic lattice (space group I432). A deformation of space that commutes with that group turns every tiling into a tiling by one new solid. A, B, C are three such deformations, each a whole family in its amplitude s, all proved in Lean. The true shapes differ from Chair44 by at most 10⁻⁷; the slider magnifies the difference."
 
 function statusLabel(settings: ExplorerSettings): string {
   if (settings.warp === 0) return "Original Chair44"
-  if (settings.warpShape !== "lean") return "Illustration · tiles exactly"
-  const magnification = formatMagnification(leanMagnification(settings.warp))
-  if (isCertified(settings)) return `Proved in Lean · ${magnification}`
-  return `Lean warp · ${magnification} · numeric`
+  return `Proved in Lean · shown ${formatMagnification(magnification({ shape: settings.warpShape, amount: settings.warp }))}`
 }
 
 function statusTooltip(settings: ExplorerSettings): string {
   if (settings.warp === 0) return "Flat faces: the paper's solid."
-  if (settings.warpShape !== "lean") return FACE_TOOLTIP
-  if (isCertified(settings)) return LEAN_TOOLTIP
-  return `${LEAN_TOOLTIP} Above ${Math.round(LEAN_CERTIFIED_AMOUNT * 100)}% the magnification exceeds that bound; there the warp is checked numerically only.`
+  return `${familyTooltip(settings.warpShape)} The view multiplies the proved displacement by the shown factor to make it visible; the magnified shape is an illustration of the proved one.`
 }
 
 export function WarpPanel({ open, onOpenChange, settings, onChange }: WarpPanelProps) {
-  const percent = Math.round(settings.warp * 100)
   return (
     <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent
@@ -92,7 +83,7 @@ export function WarpPanel({ open, onOpenChange, settings, onChange }: WarpPanelP
             <div
               className="warp-status"
               data-flat={settings.warp === 0 ? "true" : undefined}
-              data-kind={isCertified(settings) ? "proved" : "illustration"}
+              data-kind="proved"
               role="status"
             >
               {statusLabel(settings)}
@@ -109,24 +100,31 @@ export function WarpPanel({ open, onOpenChange, settings, onChange }: WarpPanelP
             variant="outline"
             size="sm"
             value={settings.warpShape}
-            aria-label="Face shape"
+            aria-label="Warp family"
             onValueChange={(value) => {
               if (WARP_SHAPES.includes(value as WarpShape)) onChange({ warpShape: value as WarpShape })
             }}
           >
             {WARP_SHAPES.map((shape) => (
-              <ToggleGroupItem key={shape} value={shape} aria-label={SHAPE_LABELS[shape]}>
-                {SHAPE_LABELS[shape]}
-              </ToggleGroupItem>
+              <Tooltip key={shape}>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value={shape} aria-label={`Family ${SHAPE_LABELS[shape]}`}>
+                    {SHAPE_LABELS[shape]}
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="warp-tooltip">
+                  {familyTooltip(shape)}
+                </TooltipContent>
+              </Tooltip>
             ))}
           </ToggleGroup>
         </div>
 
         <div className="warp-row warp-amount">
-          <span>Amount</span>
-          <span className="warp-value">{percent}%</span>
+          <span>Magnify</span>
+          <span className="warp-value">{Math.round(settings.warp * 100)}%</span>
           <Slider
-            aria-label="Warp amount"
+            aria-label="Magnification"
             min={0}
             max={1}
             step={0.01}

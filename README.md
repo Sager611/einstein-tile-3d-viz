@@ -21,8 +21,7 @@ Adjust levels, spread, and layers; orbit, pan, and zoom; use presets; select/foc
 
 The **Warp** drawer (wave button) deforms space by maps that commute with every motion used by Chair44 tilings (the 24 cube rotations with the body-centred cubic lattice, space group I432). Such a map turns every Chair44 tiling into a tiling by one new, congruent solid.
 
-- **Lean** (default): the warp proved in [`lean/`](lean/README.md). Lean 4 + Mathlib prove, assuming only the paper's Theorem 1.2, that the warped tiles tile space, that the warped solid differs from Chair44 and has no symmetry, and that warped Chair44 tilings have no translational period (`chair44_warp_concrete`). The proof uses a displacement below 3.6·10⁻⁸; the view magnifies it and labels which magnifications stay inside the proved Lipschitz bound.
-- **Nubs / Wave / Ridge**: face-local illustrations (face shapes with `f(v,u) = −f(u,v)`); their tiling property is checked numerically, not in Lean.
+Three families, **A**, **B**, **C**, all proved in [`lean/`](lean/README.md) (`familyA/B/C`, `FamilyFinal.lean`). Each is `Φ_s = id + s·V` with `V(x) = Σ_R cos(2π k·Rx) R⁻¹e` over the 24 rotations: A `k = (1, ½, ½)`, `e = (1,1,0)`; B `k = (3/2, 1, ½)`, `e = (1,0,0)`; C `k = (3/2, 3/2, 1)`, `e = (1,0,0)`. For **every** amplitude `0 < s ≤ 10⁻⁹`, Lean 4 + Mathlib prove, assuming only the paper's Theorem 1.2: `Φ_s(Q)` tiles space, differs from Chair44, has no symmetry, and its tilings of this form have no translational period. The true displacement is below 10⁻⁷; the **Magnify** slider scales it up (up to about 2·10⁷×) for viewing. Not yet proved: that different `s` (or different families) give non-congruent solids.
 
 Different arm sizes are impossible in both frameworks: see [research/asymmetric-arms](research/asymmetric-arms/README.md) (Lean: every equivariant warp fixes all cube corners).
 

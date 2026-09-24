@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: ExplorerSettings = {
   autoRotate: false,
   hiddenGroups: [],
   warp: 0,
-  warpShape: 'lean',
+  warpShape: 'a',
 };
 
 export interface SceneHandle {

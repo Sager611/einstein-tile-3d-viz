@@ -2,22 +2,36 @@ import { BufferGeometry, Float32BufferAttribute } from 'three';
 import { carrierCells, type Vec3 } from './chair44';
 
 /**
- * Equivariant face warps of Chair44.
+ * Lean-proven warp families of Chair44 (`lean/ChairWarp/Family.lean`, `FamilyFinal.lean`).
  *
- * Every Chair44 tiling places tiles by motions from Gamma = (24 proper cube rotations) x (BCC lattice),
- * the space group I432 (verified: the 44-contact atlas generates exactly these motions). Gamma acts
- * transitively on unit grid faces, and the reference face F0 = [0,1]^2 x {0} is fixed only by the
- * half-turn (x,y,z) -> (y,x,-z). Hence any face function f with f(v,u) = -f(u,v) defines a global
- * Gamma-equivariant map Phi. Phi(gQ) = g Phi(Q), so Phi maps every Chair44 tiling onto a tiling by
- * congruent copies of the single warped solid Phi(Q). Keeping |f| below the distance to the face
- * boundary keeps each face inside the double pyramid to the neighbouring cube centres, so Phi is a
- * homeomorphism and the warped pieces still tile.
+ * Every Chair44 tiling places tiles by motions from Gamma = (24 proper cube rotations) x (BCC lattice).
+ * For a wave w = (k, e) the field V_w(x) = Σ_{R ∈ R24} cos(2π k·Rx) R⁻¹e commutes with Gamma, so
+ * Φ_s = id + s V_w maps every Chair44 tiling onto a tiling by congruent copies of Φ_s(Q). Lean proves,
+ * for every 0 < s ≤ 10⁻⁹ and each family A, B, C: Φ_s is a homeomorphism, Φ_s(Q) tiles, is rigid, has
+ * only non-periodic tilings of this form, and differs from Chair44. The view magnifies s.
  */
 
-export type WarpShape = 'lean' | 'nubs' | 'wave' | 'ridge';
-export const WARP_SHAPES: readonly WarpShape[] = ['lean', 'nubs', 'wave', 'ridge'];
-/** Face-local illustrative shapes (everything except the Lean-verified global warp). */
-export const FACE_SHAPES: readonly Exclude<WarpShape, 'lean'>[] = ['nubs', 'wave', 'ridge'];
+export type WarpShape = 'a' | 'b' | 'c';
+export const WARP_SHAPES: readonly WarpShape[] = ['a', 'b', 'c'];
+
+type Family = {
+  /** 2k as integers. */
+  k2: [number, number, number];
+  e: [number, number, number];
+  /** Largest displayed scale: 0.8 / (sampled Lipschitz constant, rounded up), so the view stays injective. */
+  maxScale: number;
+  /** Certificate point pushed out of Chair44 (Lean `famX_cert`) and its exact field value. */
+  certificate: { point: [number, number, number]; value: [number, number, number] };
+};
+
+export const FAMILIES: Record<WarpShape, Family> = {
+  a: { k2: [2, 1, 1], e: [1, 1, 0], maxScale: 0.8 / 36, certificate: { point: [0.75, 0.5, 0], value: [0, 0, -4] } },
+  b: { k2: [3, 2, 1], e: [1, 0, 0], maxScale: 0.8 / 68, certificate: { point: [0.25, 0.5, 0], value: [0, 0, -4] } },
+  c: { k2: [3, 3, 2], e: [1, 0, 0], maxScale: 0.8 / 72, certificate: { point: [0.25, 0.5, 0], value: [0, 0, -4] } },
+};
+
+/** Largest amplitude covered by the Lean theorems. */
+export const LEAN_EPS = 1e-9;
 
 type Frame = { perm: Vec3; signs: Vec3 };
 
@@ -52,104 +66,30 @@ const applyInverse = ({ perm, signs }: Frame, y: Vec3): Vec3 => {
 export const inBcc = (t: Vec3): boolean =>
   t.every((value) => value % 2 === 0) || t.every((value) => Math.abs(value % 2) === 1);
 
-const REFERENCE_CENTRE2: Vec3 = [1, 1, 0]; // doubled centre of F0
-
-/** A motion (G, t) in Gamma carrying the reference face F0 onto the grid face with doubled centre `centre2`. */
-export function motionToFace(centre2: Vec3): { frame: Frame; translation: Vec3 } {
-  for (const frame of ROTATIONS) {
-    const image = apply(frame, REFERENCE_CENTRE2);
-    const delta = image.map((value, index) => centre2[index] - value);
-    if (delta.some((value) => value % 2 !== 0)) continue;
-    const translation = delta.map((value) => value / 2) as Vec3;
-    if (inBcc(translation)) return { frame, translation };
-  }
-  throw new Error(`no Gamma motion reaches face ${centre2.join(',')}`);
-}
-
-const bump = (u: number, v: number, cu: number, cv: number, sigma: number) =>
-  Math.exp(-((u - cu) ** 2 + (v - cv) ** 2) / (2 * sigma * sigma));
-
-/**
- * The warp proved in Lean (`lean/ChairWarp/Warp.lean`): V(x) = Σ_{R ∈ R24} cos(2π k·Rx) R⁻¹e₁ with
- * k = (1, 1/2, 1/2) and e₁ = (1, 1, 0). Lean uses Φ = id + ε V with ε = 10⁻⁹, proves Lip(V) ≤ 144π
- * (so Φ = id + s V is a homeomorphism for every s < 1/(144π), `LEAN_CERTIFIED_SCALE`), and proves
- * Φ(Q) ≠ Q: V(3/4, 1/2, 0) = (0, 0, -4) pushes that point of the bottom face out of the solid.
- * The slider goes further, to `LEAN_MAX_SCALE` = 0.8/36: V's sampled Lipschitz constant is about 35,
- * so s·V stays a contraction there, but that range is checked numerically only.
- */
-export const LEAN_EPS = 1e-9;
-export const LEAN_CERTIFIED_SCALE = 0.95 / (144 * Math.PI);
-export const LEAN_MAX_SCALE = 0.8 / 36;
-/** Slider amount up to which the displayed warp is inside Lean's certified bound. */
-export const LEAN_CERTIFIED_AMOUNT = LEAN_CERTIFIED_SCALE / LEAN_MAX_SCALE;
-
-export function leanField(x: Vec3): Vec3 {
+/** V_w(x) = Σ_R cos(2π k·Rx) R⁻¹e for family `shape`. */
+export function familyField(shape: WarpShape, x: Vec3): Vec3 {
+  const { k2, e } = FAMILIES[shape];
   const out: Vec3 = [0, 0, 0];
   for (const frame of ROTATIONS) {
     const y = apply(frame, x);
-    const wave = Math.cos(2 * Math.PI * (y[0] + (y[1] + y[2]) / 2));
-    const direction = applyInverse(frame, [1, 1, 0]);
+    const wave = Math.cos(Math.PI * (k2[0] * y[0] + k2[1] * y[1] + k2[2] * y[2]));
+    const direction = applyInverse(frame, e);
     for (let i = 0; i < 3; i += 1) out[i] += wave * direction[i];
   }
   return out;
 }
 
-/** Magnification of the displayed Lean warp relative to the proved one. */
-export const leanMagnification = (amount: number): number => (amount * LEAN_MAX_SCALE) / LEAN_EPS;
-
-/** Unit-amplitude antisymmetric face shapes on [0,1]^2 (vanish on the boundary, s(v,u) = -s(u,v)). */
-export function shapeValue(shape: Exclude<WarpShape, 'lean'>, u: number, v: number): number {
-  const window = Math.sin(Math.PI * u) * Math.sin(Math.PI * v);
-  switch (shape) {
-    case 'wave':
-      return window * Math.sin(Math.PI * (u - v));
-    case 'nubs':
-      return window * (bump(u, v, 0.34, 0.66, 0.12) - bump(u, v, 0.66, 0.34, 0.12));
-    case 'ridge':
-      return window * Math.tanh(6 * (u - v));
-  }
-}
-
-const SAMPLES = 96;
-const safeAmplitudeCache = new Map<Exclude<WarpShape, 'lean'>, number>();
-
-/** Largest amplitude keeping |A s| strictly inside the face's double pyramid (5% safety margin). */
-export function safeAmplitude(shape: Exclude<WarpShape, 'lean'>): number {
-  const cached = safeAmplitudeCache.get(shape);
-  if (cached !== undefined) return cached;
-  let best = Infinity;
-  for (let i = 1; i < SAMPLES; i += 1) {
-    for (let j = 1; j < SAMPLES; j += 1) {
-      const u = i / SAMPLES, v = j / SAMPLES;
-      const s = Math.abs(shapeValue(shape, u, v));
-      if (s > 1e-9) best = Math.min(best, Math.min(u, 1 - u, v, 1 - v) / s);
-    }
-  }
-  const amplitude = 0.95 * best;
-  safeAmplitudeCache.set(shape, amplitude);
-  return amplitude;
-}
+/** Magnification of the displayed warp relative to the largest proved amplitude 10⁻⁹. */
+export const magnification = (warp: Warp): number => (warp.amount * FAMILIES[warp.shape].maxScale) / LEAN_EPS;
 
 export type Warp = { shape: WarpShape; amount: number };
 
-/** Displacement of a point `y` lying on a grid face (world coordinates, integer grid). */
+/** Displayed displacement Φ(y) - y: the proved field at scale `amount · maxScale`. */
 export function warpDisplacement(y: Vec3, warp: Warp): Vec3 {
   if (warp.amount === 0) return [0, 0, 0];
-  if (warp.shape === 'lean') {
-    // Global warp: moves every point, including edges and corners.
-    const v = leanField(y);
-    const scale = warp.amount * LEAN_MAX_SCALE;
-    return [scale * v[0], scale * v[1], scale * v[2]];
-  }
-  const faceShape = warp.shape;
-  const onGrid = y.map((value) => Math.abs(value - Math.round(value)) < 1e-9);
-  const axis = onGrid.filter(Boolean).length === 1 ? onGrid.indexOf(true) : -1;
-  if (axis < 0) return [0, 0, 0]; // edges and corners never move
-  const centre2 = y.map((value, index) => (index === axis ? 2 * Math.round(value) : 2 * Math.floor(value) + 1)) as Vec3;
-  const { frame, translation } = motionToFace(centre2);
-  const local = applyInverse(frame, [y[0] - translation[0], y[1] - translation[1], y[2] - translation[2]]);
-  const height = warp.amount * safeAmplitude(faceShape) * shapeValue(faceShape, local[0], local[1]);
-  return apply(frame, [0, 0, height]);
+  const v = familyField(warp.shape, y);
+  const scale = warp.amount * FAMILIES[warp.shape].maxScale;
+  return [scale * v[0], scale * v[1], scale * v[2]];
 }
 
 /**

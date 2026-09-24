@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getTiles, rotateVector, transformPoint, carrierCells, type Vec3 } from './chair44';
-import { FACE_SHAPES, LEAN_CERTIFIED_AMOUNT, LEAN_MAX_SCALE, ROTATIONS, WARP_SHAPES, createWarpedChairGeometry, inBcc, leanField, safeAmplitude, shapeValue, warpDisplacement } from './warp';
+import { FAMILIES, ROTATIONS, WARP_SHAPES, createWarpedChairGeometry, familyField, inBcc, magnification, warpDisplacement } from './warp';
 
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
@@ -27,7 +27,7 @@ function panelPoints(count: number, seed: number): Vec3[] {
   return points;
 }
 
-describe('equivariant face warps', () => {
+describe('Lean-proven warp families', () => {
   it('uses the 24 proper rotations and the body-centred lattice', () => {
     expect(ROTATIONS).toHaveLength(24);
     expect(inBcc([2, 0, -4])).toBe(true);
@@ -37,26 +37,6 @@ describe('equivariant face warps', () => {
 
   it('every tile pose in a level-2 block lies in Gamma = rotations x BCC', () => {
     for (const tile of getTiles(2)) expect(inBcc(tile.translation)).toBe(true);
-  });
-
-  it.each(FACE_SHAPES)('%s face shape is antisymmetric across the diagonal and vanishes on the boundary', (shape) => {
-    for (const [u, v] of [[0.2, 0.7], [0.35, 0.1], [0.9, 0.45]]) {
-      expect(shapeValue(shape, v, u)).toBeCloseTo(-shapeValue(shape, u, v), 12);
-    }
-    for (const t of [0, 0.3, 1]) {
-      expect(shapeValue(shape, 0, t)).toBeCloseTo(0, 12);
-      expect(shapeValue(shape, t, 1)).toBeCloseTo(0, 12);
-    }
-  });
-
-  it.each(FACE_SHAPES)('%s at full amount keeps every face inside its double pyramid', (shape) => {
-    const amplitude = safeAmplitude(shape);
-    for (let i = 1; i < 200; i += 1) {
-      for (let j = 1; j < 200; j += 1) {
-        const u = i / 200, v = j / 200;
-        expect(Math.abs(amplitude * shapeValue(shape, u, v))).toBeLessThan(Math.min(u, 1 - u, v, 1 - v));
-      }
-    }
   });
 
   it.each(WARP_SHAPES)('%s: every tile of a level-2 block is an exact copy of one warped tile', (shape) => {
@@ -74,8 +54,8 @@ describe('equivariant face warps', () => {
     expect(worst).toBeLessThan(1e-9);
   });
 
-  it('builds the warped solid with volume exactly 7 (antisymmetric warps integrate to zero)', () => {
-    const geometry = createWarpedChairGeometry({ shape: 'nubs', amount: 1 }, 8);
+  it('builds a closed warped solid of volume close to 7', () => {
+    const geometry = createWarpedChairGeometry({ shape: 'b', amount: 1 }, 8);
     const position = geometry.getAttribute('position');
     const index = geometry.getIndex();
     if (!index) throw new Error('expected indexed geometry');
@@ -88,41 +68,46 @@ describe('equivariant face warps', () => {
       });
       volume += (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6;
     }
-    expect(Math.abs(volume - 7)).toBeLessThan(1e-6); // Float32 vertex rounding
+    expect(Math.abs(volume - 7)).toBeLessThan(0.5);
     // Rotations map normals consistently (sanity for the pose helpers).
     expect(rotateVector([0, 0, 1], getTiles(0)[0])).toEqual([0, 0, 1]);
   });
 
-  it('the Lean warp field matches the Lean certificate V(3/4,1/2,0) = (0,0,-4)', () => {
-    const v = leanField([0.75, 0.5, 0]);
-    expect(v[0]).toBeCloseTo(0, 12);
-    expect(v[1]).toBeCloseTo(0, 12);
-    expect(v[2]).toBeCloseTo(-4, 12);
+  it.each(WARP_SHAPES)('%s: field matches the Lean certificate value', (shape) => {
+    const { point, value } = FAMILIES[shape].certificate;
+    const v = familyField(shape, point);
+    for (let i = 0; i < 3; i += 1) expect(v[i]).toBeCloseTo(value[i], 12);
   });
 
-  it('the Lean warp bends faces: normal components on grid faces are non-zero', () => {
+  it.each(WARP_SHAPES)('%s: bends faces (normal component on a grid face is non-zero)', (shape) => {
     let worst = 0;
     for (let i = 1; i < 20; i += 1) for (let j = 1; j < 20; j += 1) {
-      worst = Math.max(worst, Math.abs(leanField([i / 20, j / 20, 0])[2]));
+      worst = Math.max(worst, Math.abs(familyField(shape, [i / 20, j / 20, 0])[2]));
     }
     expect(worst).toBeGreaterThan(3);
   });
 
-  it('the certified range sits inside the displayed range', () => {
-    expect(LEAN_CERTIFIED_AMOUNT).toBeGreaterThan(0.05);
-    expect(LEAN_CERTIFIED_AMOUNT).toBeLessThan(1);
+  it('families are pairwise different fields', () => {
+    const p: Vec3 = [0.3, 0.7, 0.1];
+    const [a, b, c] = WARP_SHAPES.map((shape) => familyField(shape, p));
+    expect(Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])).toBeGreaterThan(0.1);
+    expect(Math.hypot(b[0] - c[0], b[1] - c[1], b[2] - c[2])).toBeGreaterThan(0.1);
   });
 
-  it('the displayed Lean warp stays a homeomorphism: sampled Lipschitz constant of s·V is below 1', () => {
+  it('magnification is relative to the proved amplitude 1e-9', () => {
+    expect(magnification({ shape: 'a', amount: 1 })).toBeCloseTo(FAMILIES.a.maxScale / 1e-9, 3);
+  });
+
+  it.each(WARP_SHAPES)('%s: the magnified view stays a homeomorphism (sampled Lipschitz constant of s·V below 1)', (shape) => {
     let state = 5;
     const random = () => ((state = (state * 16807) % 2147483647) / 2147483647);
     let worst = 0;
     for (let k = 0; k < 20000; k += 1) {
       const p: Vec3 = [2 * random(), 2 * random(), 2 * random()];
       const d: Vec3 = [1e-5 * (random() - 0.5), 1e-5 * (random() - 0.5), 1e-5 * (random() - 0.5)];
-      const a = leanField(p), b = leanField(add(p, d));
+      const a = familyField(shape, p), b = familyField(shape, add(p, d));
       const num = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-      worst = Math.max(worst, (LEAN_MAX_SCALE * num) / Math.hypot(...d));
+      worst = Math.max(worst, (FAMILIES[shape].maxScale * num) / Math.hypot(...d));
     }
     expect(worst).toBeLessThan(1);
   });

@@ -31,6 +31,23 @@ symmetry. Then for the explicit homeomorphism `warp : ℝ³ ≃ₜ ℝ³`:
 | `Ergodic.lean` | Mean ergodic theorem ⇒ an isometry all of whose powers stay within `C < 1/2` of the identity on a unit ball is the identity. |
 | `Final.lean` | Every self-isometry of `warp '' Q` and all its powers are near-symmetries of `Q` with defect `72ε` ⇒ `warp_rigid`; `warp_image_ne` (the certificate point of the bottom face is pushed out of every box covering `Q`); `chair44_warp_concrete`. |
 
+## Three infinite families (`ChairWarp/Family.lean`, `ChairWarp/FamilyFinal.lean`)
+
+`WaveSpec` = integer data `(2k, e)`; `V(x) = Σ_{R ∈ R24} cos(2π k·Rx) R⁻¹e`, `Φ_s = id + sV`.
+For any spec with small coefficients and even `2k₀+2k₁+2k₂` (`Good`, decided), and every
+`0 ≤ s ≤ 10⁻⁹`: `Φ_s` is a homeomorphism commuting with `Γ` (`warp_comm`) and moves points by at
+most `48 s`. `family_concrete`: given an integer certificate `Cert` (a point on Chair44's bottom face
+pushed straight out, all `decide +kernel`), every `0 < s ≤ 10⁻⁹` gives a tiling solid that is rigid,
+non-periodic and different from Chair44.
+
+| Theorem | `k` | `e` | certificate point, `V` there |
+|---|---|---|---|
+| `familyA` | (1, ½, ½) | (1,1,0) | (¾, ½, 0), (0,0,−4) |
+| `familyB` | (3/2, 1, ½) | (1,0,0) | (¼, ½, 0), (0,0,−4) |
+| `familyC` | (3/2, 3/2, 1) | (1,0,0) | (¼, ½, 0), (0,0,−4) |
+
+Not proved: that different `s` (or different families) give non-congruent solids.
+
 ## Obstruction (`ChairWarp/Obstruction.lean`)
 
 `equivariant_fixes_grid`: every map commuting with Chair44's motion group fixes every point of the

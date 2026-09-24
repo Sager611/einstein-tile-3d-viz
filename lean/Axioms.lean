@@ -21,3 +21,6 @@ import ChairWarp
 #print axioms warp_image_ne
 #print axioms equivariant_fixes_grid
 #print axioms warp_fixes_grid
+#print axioms familyA
+#print axioms familyB
+#print axioms familyC
