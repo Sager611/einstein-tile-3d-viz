@@ -23,7 +23,15 @@ The **Warp** drawer (wave button) deforms space by maps that commute with every 
 
 Three families, **A**, **B**, **C**, all proved in [`lean/`](lean/README.md) (`familyA/B/C`, `FamilyFinal.lean`). Each is `Φ_s = id + s·V` with `V(x) = Σ_R cos(2π k·Rx) R⁻¹e` over the 24 rotations: A `k = (1, ½, ½)`, `e = (1,1,0)`; B `k = (0, 2, 1)`, `e = (1,0,0)`; C `k = (3/2, 3/2, 1)`, `e = (1,0,0)`. For **every** amplitude `0 < s ≤ 10⁻⁹`, Lean 4 + Mathlib prove, assuming only the paper's Theorem 1.2: `Φ_s(Q)` tiles space, differs from Chair44, has no symmetry, and its tilings of this form have no translational period. The true displacement is below 10⁻⁷; the **Magnify** slider scales it up (up to about 2·10⁷×) for viewing. Lean also proves different `s` give non-congruent solids (`familyA/B/C_noncongruent`), so each family is infinite. Not proved: non-congruence across families.
 
-Paper-ready figures of the three families: [docs/figures](docs/figures/README.md).
+Paper-ready figures of the three families ([docs/figures](docs/figures/README.md), PDF/SVG/PNG):
+
+![Families A, B, C](docs/figures/families-overview.png)
+
+![Family A](docs/figures/family-A.png)
+
+![Family B](docs/figures/family-B.png)
+
+![Family C](docs/figures/family-C.png)
 
 Different arm sizes are impossible in both frameworks: see [research/asymmetric-arms](research/asymmetric-arms/README.md) (Lean: every equivariant warp fixes all cube corners).
 
